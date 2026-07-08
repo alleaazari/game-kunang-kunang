@@ -520,7 +520,7 @@ positionalAudio.setDirectionalCone( 180, 230, 0.1 );
 const helper = new PositionalAudioHelper( positionalAudio, 0.1 );
 
 const gltfLoader = new GLTFLoader();
-gltfLoader.load( ASSET_BASE + '/models/gltf/BoomBox.glb', function ( gltf ) {
+gltfLoader.load( 'assets/BoomBox.glb', function ( gltf ) {
 	const boomBox = gltf.scene;
 	boomBox.position.set( 7.7, -0.1, -9.5 );
 	boomBox.scale.set( 20, 20, 20 );
@@ -1218,7 +1218,7 @@ function createMossTexture() {
 const mossTexture = createMossTexture();
 
 function loadCollisionWorld() {
-	const loader = new GLTFLoader().setPath( ASSET_BASE + '/models/gltf/' );
+	const loader = new GLTFLoader().setPath( 'assets/' );
 	loader.load( 'collision-world.glb', ( gltf ) => {
 		const meshesToRemove = [];
 		let artIndex = 0;

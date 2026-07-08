@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Taman Kunang-Kunang Ajaib</title>
+		<link rel="icon" type="image/svg+xml" href="./firefly-favicon.svg">
+		<meta charset=utf-8 />
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="./css/main.css">
+	</head>
+	<body>
+		<!-- Active Scene HUD Badge (Center Top) -->
+		<div id="scene-badge" class="scene-title-badge">Taman Labirin Awal</div>
+
+		<!-- Smooth Transition Overlay screen -->
+		<div id="transition-overlay"></div>
+
+		<!-- Glassmorphic Description Card for Scene 2 (Taman Abadi) -->
+		<div id="taman-desc-card" class="info-card-taman" style="display: none; opacity: 0;">
+			<h3>Taman Abadi 🌿</h3>
+			<p>Selamat datang di dimensi rahasia yang damai. Tempat mistis ini diterangi oleh hangatnya pendar lampu antik dan tarian indah kunang-kunang ajaib di bawah naungan pohon rindang yang sunyi.</p>
+		</div>
+
+		<!-- Serene forest ambient soundscape -->
+		<audio 
+			loop id="music" 
+			preload="auto" 
+			crossorigin="anonymous"
+			style="display: none">
+				<source src="https://raw.githubusercontent.com/bradtraversy/ambient-sound-mixer/main/mp3/forest.mp3" type="audio/mpeg">
+		</audio>
+
+		<!-- Glassmorphic start overlay to satisfy modern browser autoplay rules and look premium -->
+		<div id="overlay">
+			<div class="overlay-card">
+				<h1>Taman Kunang-Kunang</h1>
+				<p>Selamat datang di taman kunang-kunang ajaib. Jelajahi labirin rahasia di bawah cahaya rembulan yang mistis.</p>
+				<button id="startButton">Mulai Petualangan</button>
+				<div class="controls-guide">
+					<h3>Panduan Navigasi</h3>
+					<div class="guide-row">
+						<span>Melihat Sekitar</span>
+						<span class="key-badge">🖱️ Gerakkan Mouse</span>
+					</div>
+					<div class="guide-row">
+						<span>Berjalan</span>
+						<span class="key-badge">W / A / S / D</span>
+					</div>
+					<div class="guide-row">
+						<span>Melompat</span>
+						<span class="key-badge">Space</span>
+					</div>
+					<div class="guide-row">
+						<span>Tembak/Lepas Kunang-kunang</span>
+						<span class="key-badge">Klik Kiri (Tanah/Dinding)</span>
+					</div>
+					<div class="guide-row">
+						<span>Pindah ke Taman Abadi</span>
+						<span class="key-badge">Klik Salah 1 Pohon 🌳</span>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="info">
+			🌳 <b>Klik salah satu pohon</b> untuk beralih ke "Taman Abadi"<br/>
+			🖱️ <b>Klik Kiri (Dinding/Tanah)</b> untuk melepas kunang-kunang bercahaya<br/>
+			⌨️ <b>WASD</b> untuk bergerak & <b>Spasi</b> untuk lompat & <b>ESC</b> untuk melepas kursor
+		</div>
+
+		<div id="container"></div>
+
+		<!-- Import maps polyfill -->
+		<!-- Remove this when import maps will be widely supported -->
+		<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "https://unpkg.com/three@0.142.0/build/three.module.js",
+					"three/addons/": "https://unpkg.com/three@0.142.0/examples/jsm/"
+				}
+			}
+		</script>
+
+		<!-- Reference the separated Three.js module -->
+		<script type="module" src="./game.js"></script>
+	</body>
+</html>
