@@ -649,6 +649,11 @@ document.addEventListener( 'mouseup', (event) => {
 	if (overlay.style.display !== 'none') return;
 	
 	if (isTamanAbadi) {
+		// Update mousePos just in case mousemove didn't trigger
+		if (event.clientX !== undefined) {
+			mousePos.x = (event.clientX / window.innerWidth) * 2 - 1;
+			mousePos.y = -(event.clientY / window.innerHeight) * 2 + 1;
+		}
 		// Handle Scene 2 Click Raycast
 		raycaster.setFromCamera(mousePos, camera);
 		const intersects = raycaster.intersectObject(returnButtonSprite);
@@ -658,11 +663,18 @@ document.addEventListener( 'mouseup', (event) => {
 		return;
 	}
 
+	// Update mouse coordinates on click if pointer is not locked
+	if (document.pointerLockElement === null && event.clientX !== undefined) {
+		mousePos.x = (event.clientX / window.innerWidth) * 2 - 1;
+		mousePos.y = -(event.clientY / window.innerHeight) * 2 + 1;
+	}
+
+	// Check if click aims at a tree (works whether pointer is locked or not)
+	if (checkTreeClick(event)) {
+		return; // Transition triggers, skip throwing ball
+	}
+
 	if (document.pointerLockElement !== null) {
-		// Check if click aims at a tree
-		if (checkTreeClick(event)) {
-			return; // Transition triggers, skip throwing ball
-		}
 		throwBall();
 	}
 } );
@@ -1611,6 +1623,11 @@ function checkTreeClick(event) {
 	if (devilTree) targetTrees.push(devilTree);
 	if (deathTree) targetTrees.push(deathTree);
 	if (cityTree) targetTrees.push(cityTree);
+
+	// Also include the floating label sprites in the raycast target list
+	floatingLabels.forEach(item => {
+		if (item.sprite) targetTrees.push(item.sprite);
+	});
 
 	const intersects = raycaster.intersectObjects(targetTrees, true);
 
