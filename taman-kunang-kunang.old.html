@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Taman Kunang-Kunang Ajaib</title>
+		<link rel="icon" type="image/svg+xml" href="./firefly-favicon.svg">
+		<meta charset=utf-8 />
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="./css/main.css">
+	</head>
+	<body>
+		<!-- Serene forest ambient soundscape replacing lecturer's rap audio -->
+		<audio 
+			loop id="music" 
+			preload="auto" 
+			crossorigin="anonymous"
+			style="display: none">
+				<source src="https://raw.githubusercontent.com/bradtraversy/ambient-sound-mixer/main/mp3/forest.mp3" type="audio/mpeg">
+		</audio>
+
+		<!-- Glassmorphic start overlay to satisfy modern browser autoplay rules and look premium -->
+		<div id="overlay">
+			<div class="overlay-card">
+				<h1>Taman Kunang-Kunang</h1>
+				<p>Selamat datang di taman kunang-kunang ajaib. Jelajahi labirin rahasia di bawah cahaya rembulan yang mistis.</p>
+				<button id="startButton">Mulai Petualangan</button>
+				<div class="controls-guide">
+					<h3>Panduan Navigasi</h3>
+					<div class="guide-row">
+						<span>Melihat Sekitar</span>
+						<span class="key-badge">🖱️ Gerakkan Mouse</span>
+					</div>
+					<div class="guide-row">
+						<span>Berjalan</span>
+						<span class="key-badge">W / A / S / D</span>
+					</div>
+					<div class="guide-row">
+						<span>Melompat</span>
+						<span class="key-badge">Space</span>
+					</div>
+					<div class="guide-row">
+						<span>Lepas Kunang-kunang</span>
+						<span class="key-badge">Klik Kiri</span>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="info">
+			🖱️ <b>Klik Kiri</b> untuk melepas kunang-kunang bercahaya<br/>
+			⌨️ <b>WASD</b> untuk bergerak & <b>Spasi</b> untuk lompat<br/>
+			⎋ <b>ESC</b> untuk memunculkan pointer mouse
+		</div>
+
+		<div id="container"></div>
+
+		<!-- Import maps polyfill -->
+		<!-- Remove this when import maps will be widely supported -->
+		<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "https://unpkg.com/three@0.142.0/build/three.module.js"
+				}
+			}
+		</script>
+
+		<script type="module">
+
+			import * as THREE from 'three';
+			import Stats from 'https://unpkg.com/three@0.142.0/examples/jsm/libs/stats.module.js';
+			import { GLTFLoader } from 'https://unpkg.com/three@0.142.0/examples/jsm/loaders/GLTFLoader.js';
+			import { Octree } from 'https://unpkg.com/three@0.142.0/examples/jsm/math/Octree.js';
+			import { OctreeHelper } from 'https://unpkg.com/three@0.142.0/examples/jsm/helpers/OctreeHelper.js';
+			import { DRACOLoader } from 'https://unpkg.com/three@0.142.0/examples/jsm/loaders/DRACOLoader.js';
+			import { Capsule } from 'https://unpkg.com/three@0.142.0/examples/jsm/math/Capsule.js';
+			import { GUI } from 'https://unpkg.com/three@0.142.0/examples/jsm/libs/lil-gui.module.min.js';
+			import { PositionalAudioHelper } from 'https://unpkg.com/three@0.142.0/examples/jsm/helpers/PositionalAudioHelper.js';
+
+			let mixer;
+
+			// Base URL for assets from the reference site
+			const ASSET_BASE = 'https://fiqart.vercel.app';
+
+			// --- PROCEDURAL PORTAL TEXTURES ---
+			// Creating dynamic HTML5 Canvases to replace original urban video elements
+			function createProceduralCanvas() {
+				const canvas = document.createElement('canvas');
+				canvas.width = 256;
+				canvas.height = 256;
+				const ctx = canvas.getContext('2d');
+				return { canvas, ctx };
+			}
+
+			const p1 = createProceduralCanvas(); // Swirling Golden Fireflies
+			const p2 = createProceduralCanvas(); // Glowing Tree of Life
+			const p3 = createProceduralCanvas(); // Trapped Bioluminescent Spores
+			const p4 = createProceduralCanvas(); // Cosmic Portal
+			const p5 = createProceduralCanvas(); // Rippling Natural Energy
+
+			const texture1 = new THREE.CanvasTexture(p1.canvas);
+			const texture2 = new THREE.CanvasTexture(p2.canvas);
+			const texture3 = new THREE.CanvasTexture(p3.canvas);
+			const texture4 = new THREE.CanvasTexture(p4.canvas);
+			const texture5 = new THREE.CanvasTexture(p5.canvas);
+
+			const movieMaterial = new THREE.MeshBasicMaterial({ map: texture1, side: THREE.DoubleSide });
+			const himMaterial   = new THREE.MeshBasicMaterial({ map: texture2, side: THREE.DoubleSide });
+			const devilMaterial = new THREE.MeshBasicMaterial({ map: texture3, side: THREE.DoubleSide });
+			const deathMaterial = new THREE.MeshBasicMaterial({ map: texture4, side: THREE.DoubleSide });
+			const cityMaterial  = new THREE.MeshBasicMaterial({ map: texture5, side: THREE.DoubleSide });
+
+			// Portal 1: Swirling Golden Fireflies
+			function drawPortal1(ctx, time) {
+				ctx.fillStyle = '#0a0518';
+				ctx.fillRect(0, 0, 256, 256);
+				
+				// Central glow
+				let grad = ctx.createRadialGradient(128, 128, 5, 128, 128, 110);
+				grad.addColorStop(0, 'rgba(216, 245, 60, 0.45)');
+				grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+				ctx.fillStyle = grad;
+				ctx.fillRect(0, 0, 256, 256);
+				
+				// Spiral fireflies
+				const count = 24;
+				for (let i = 0; i < count; i++) {
+					let angle = i * (Math.PI * 2 / count) + time * 1.2;
+					let dist = 35 + Math.sin(time * 0.8 + i) * 12 + i * 3.2;
+					let x = 128 + Math.cos(angle) * dist;
+					let y = 128 + Math.sin(angle) * dist;
+					let size = 2 + Math.abs(Math.sin(time * 2 + i)) * 3.5;
+					
+					ctx.beginPath();
+					ctx.arc(x, y, size, 0, Math.PI * 2);
+					ctx.fillStyle = `hsla(${(i * 15 + time * 15) % 360}, 95%, 68%, 0.85)`;
+					ctx.shadowColor = '#d8f53c';
+					ctx.shadowBlur = 8;
+					ctx.fill();
+				}
+				ctx.shadowBlur = 0;
+			}
+
+			// Portal 2: Glowing Tree of Life
+			function drawPortal2(ctx, time) {
+				ctx.fillStyle = '#060a16';
+				ctx.fillRect(0, 0, 256, 256);
+				
+				let grad = ctx.createRadialGradient(128, 160, 5, 128, 128, 90);
+				grad.addColorStop(0, 'rgba(56, 189, 248, 0.4)');
+				grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+				ctx.fillStyle = grad;
+				ctx.fillRect(0, 0, 256, 256);
+
+				// Draw Trunk
+				ctx.strokeStyle = '#38bdf8';
+				ctx.lineWidth = 4;
+				ctx.shadowColor = '#00e1ff';
+				ctx.shadowBlur = 8;
+				ctx.beginPath();
+				ctx.moveTo(128, 210);
+				ctx.quadraticCurveTo(128, 140, 128, 120);
+				ctx.stroke();
+
+				// Branches
+				const pulse = Math.sin(time * 2.5) * 8;
+				ctx.lineWidth = 2;
+				ctx.beginPath();
+				ctx.moveTo(128, 145);
+				ctx.quadraticCurveTo(105, 115, 85 + pulse, 105);
+				ctx.moveTo(128, 145);
+				ctx.quadraticCurveTo(151, 115, 171 - pulse, 105);
+				ctx.moveTo(128, 125);
+				ctx.quadraticCurveTo(112, 85, 112, 65 + pulse * 0.5);
+				ctx.moveTo(128, 125);
+				ctx.quadraticCurveTo(144, 85, 144, 65 - pulse * 0.5);
+				ctx.stroke();
+
+				// Spores / Fruits
+				const fruits = [
+					{ x: 85 + pulse, y: 105, color: '#d8f53c' },
+					{ x: 171 - pulse, y: 105, color: '#d8f53c' },
+					{ x: 112, y: 65 + pulse * 0.5, color: '#38bdf8' },
+					{ x: 144, y: 65 - pulse * 0.5, color: '#a855f7' }
+				];
+				fruits.forEach(f => {
+					ctx.beginPath();
+					ctx.arc(f.x, f.y, 5 + Math.sin(time * 3 + f.x) * 2, 0, Math.PI * 2);
+					ctx.fillStyle = f.color;
+					ctx.shadowColor = f.color;
+					ctx.shadowBlur = 10;
+					ctx.fill();
+				});
+				ctx.shadowBlur = 0;
+			}
+
+			// Portal 3: Bioluminescent Spores in Container
+			const jarParticles = [];
+			for (let i = 0; i < 22; i++) {
+				jarParticles.push({
+					x: Math.random() * 110 + 73,
+					y: Math.random() * 140 + 60,
+					vx: (Math.random() - 0.5) * 45,
+					vy: (Math.random() - 0.5) * 45,
+					size: Math.random() * 2.5 + 2,
+					color: `hsla(${(Math.random() * 40 + 70) % 360}, 90%, 65%, 0.8)`
+				});
+			}
+
+			function drawPortal3(ctx, time, dt) {
+				ctx.fillStyle = '#090d0b';
+				ctx.fillRect(0, 0, 256, 256);
+				
+				// Jar Wireframe
+				ctx.strokeStyle = 'rgba(216, 245, 60, 0.35)';
+				ctx.lineWidth = 3;
+				ctx.strokeRect(68, 55, 120, 150);
+				ctx.strokeRect(84, 42, 88, 13);
+				
+				// Spores update
+				jarParticles.forEach(p => {
+					p.x += p.vx * dt;
+					p.y += p.vy * dt;
+					
+					if (p.x < 72 || p.x > 182) { p.vx *= -1; p.x = Math.max(72, Math.min(182, p.x)); }
+					if (p.y < 59 || p.y > 201) { p.vy *= -1; p.y = Math.max(59, Math.min(201, p.y)); }
+					
+					ctx.beginPath();
+					ctx.arc(p.x, p.y, p.size * (1.0 + Math.sin(time * 4 + p.x) * 0.25), 0, Math.PI * 2);
+					ctx.fillStyle = p.color;
+					ctx.shadowColor = p.color;
+					ctx.shadowBlur = 6;
+					ctx.fill();
+				});
+				ctx.shadowBlur = 0;
+			}
+
+			// Portal 4: Magical Nebula Vortex
+			function drawPortal4(ctx, time) {
+				ctx.fillStyle = '#0c0714';
+				ctx.fillRect(0, 0, 256, 256);
+				
+				let grad = ctx.createRadialGradient(128, 128, 2, 128, 128, 120);
+				grad.addColorStop(0, '#a855f7');
+				grad.addColorStop(0.5, '#ec4899');
+				grad.addColorStop(1, 'transparent');
+				ctx.fillStyle = grad;
+				ctx.fillRect(0, 0, 256, 256);
+				
+				ctx.save();
+				ctx.translate(128, 128);
+				ctx.rotate(time * 0.7);
+				
+				ctx.shadowColor = '#f472b6';
+				ctx.shadowBlur = 12;
+				ctx.fillStyle = '#ffffff';
+				
+				for (let j = 0; j < 4; j++) {
+					ctx.rotate(Math.PI / 2);
+					for (let i = 1; i < 9; i++) {
+						let x = i * 14;
+						let y = Math.sin(time * 3 + i) * 6;
+						ctx.beginPath();
+						ctx.arc(x, y, 3.5 - i * 0.35, 0, Math.PI * 2);
+						ctx.fill();
+					}
+				}
+				ctx.restore();
+				ctx.shadowBlur = 0;
+			}
+
+			// Portal 5: Rippling Natural Energy
+			function drawPortal5(ctx, time) {
+				ctx.fillStyle = '#050c0c';
+				ctx.fillRect(0, 0, 256, 256);
+				
+				ctx.shadowBlur = 10;
+				for (let i = 0; i < 4; i++) {
+					let r = ((time * 50 + i * 50) % 150);
+					let alpha = 1.0 - r / 150;
+					
+					ctx.strokeStyle = `rgba(16, 185, 129, ${alpha})`;
+					ctx.shadowColor = `rgba(16, 185, 129, ${alpha})`;
+					ctx.lineWidth = 3;
+					ctx.beginPath();
+					ctx.arc(128, 128, r, 0, Math.PI * 2);
+					ctx.stroke();
+				}
+				ctx.shadowBlur = 0;
+			}
+			
+			const clock = new THREE.Clock();
+
+			const scene = new THREE.Scene();
+			// Dark forest theme background & exponential fog
+			scene.background = new THREE.Color( 0x070913 );
+			scene.fog = new THREE.FogExp2( 0x070913, 0.035 );
+
+			const camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.1, 1000 );
+			camera.rotation.order = 'YXZ';
+
+			// Dim ambient moonlight
+			const fillLight1 = new THREE.HemisphereLight( 0x223366, 0x0a0f0d, 0.35 );
+			fillLight1.position.set( 2, 10, 1 );
+			scene.add( fillLight1 );
+
+			// Soft silver moon directional light
+			const directionalLight = new THREE.DirectionalLight( 0xaaccff, 0.45 );
+			directionalLight.position.set( - 10, 20, 3 );
+			directionalLight.castShadow = true;
+			directionalLight.shadow.camera.near = 0.01;
+			directionalLight.shadow.camera.far = 500;
+			directionalLight.shadow.camera.right = 30;
+			directionalLight.shadow.camera.left = - 30;
+			directionalLight.shadow.camera.top	= 30;
+			directionalLight.shadow.camera.bottom = - 30;
+			directionalLight.shadow.mapSize.width = 1024;
+			directionalLight.shadow.mapSize.height = 1024;
+			directionalLight.shadow.radius = 4;
+			directionalLight.shadow.bias = - 0.00006;
+			scene.add( directionalLight );
+
+			const container = document.getElementById( 'container' );
+
+			const renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.shadowMap.enabled = true;
+			renderer.shadowMap.type = THREE.VSMShadowMap;
+			renderer.outputEncoding = THREE.sRGBEncoding;
+			renderer.toneMapping = THREE.ACESFilmicToneMapping;
+			container.appendChild( renderer.domElement );
+
+			const stats = new Stats();
+			stats.domElement.style.position = 'absolute';
+			stats.domElement.style.top = '0px';
+			container.appendChild( stats.domElement );
+
+			const GRAVITY = 30;
+
+			const NUM_SPHERES = 100;
+			const SPHERE_RADIUS = 0.2;
+
+			const STEPS_PER_FRAME = 5;
+
+			const sphereGeometry = new THREE.IcosahedronGeometry( SPHERE_RADIUS, 5 );
+			// Spores thrown by user are bright, glowing green
+			const sphereMaterial = new THREE.MeshBasicMaterial( { color: 0xd8f53c } );
+
+			const spheres = [];
+			let sphereIdx = 0;
+
+			// Add Projectile Light Pool (8 dynamic glowing sources)
+			const projectileLights = [];
+			const maxProjLights = 8;
+			for (let i = 0; i < maxProjLights; i++) {
+				const pLight = new THREE.PointLight(0xd8f53c, 2.5, 12);
+				scene.add(pLight);
+				projectileLights.push(pLight);
+			}
+
+			// --- LOAD POHON (TREE) GLB MODEL ---
+			let originalTreeModel = null;
+			let originalTreeHeight = 1.0;
+			const treeModelLoader = new GLTFLoader();
+
+			function createMagicalTreeFromGLB(foliageMaterial, targetHeight = 2.0) {
+				if (!originalTreeModel) return new THREE.Group();
+				
+				// Clone the tree model scene graph
+				const treeGroup = originalTreeModel.clone();
+				
+				// Scale the group to exactly targetHeight based on original bounding box height
+				const scaleFactor = targetHeight / originalTreeHeight;
+				treeGroup.scale.set(scaleFactor, scaleFactor, scaleFactor);
+				
+				// Find and replace the foliage material with the custom portal/foliage material
+				treeGroup.traverse( child => {
+					if ( child.isMesh ) {
+						const matName = child.material.name.toLowerCase();
+						// Find foliage meshes (typically containing "leaf", "green", "daun" or similar)
+						if ( matName.includes('leaf') || matName.includes('green') ) {
+							child.material = foliageMaterial;
+						}
+					}
+				});
+				
+				return treeGroup;
+			}
+
+			// Pre-declare tree variables so they are accessible
+			let movieTree, himTree, devilTree, deathTree, cityTree;
+
+			treeModelLoader.load( 'assets/pohon.glb', function( gltf ) {
+				originalTreeModel = gltf.scene;
+				
+				// Calculate original bounding box dimensions
+				const box = new THREE.Box3().setFromObject(originalTreeModel);
+				const size = new THREE.Vector3();
+				box.getSize(size);
+				originalTreeHeight = size.y || 1.0;
+				
+				// Ensure shadows
+				originalTreeModel.traverse( child => {
+					if ( child.isMesh ) {
+						child.castShadow = true;
+						child.receiveShadow = true;
+					}
+				});
+				
+				// Spawn all 5 portal trees using the custom assets/pohon.glb model (scaled to 3.5 units for medium size)
+				movieTree = createMagicalTreeFromGLB(movieMaterial, 3.5);
+				movieTree.position.set(6, -1.8, 2);
+				scene.add(movieTree);
+
+				himTree = createMagicalTreeFromGLB(himMaterial, 3.5);
+				himTree.position.set(-9, 0.0, 12); // elevated platform
+				scene.add(himTree);
+
+				devilTree = createMagicalTreeFromGLB(devilMaterial, 3.5);
+				devilTree.position.set(12, -1.8, 0);
+				scene.add(devilTree);
+
+				deathTree = createMagicalTreeFromGLB(deathMaterial, 3.5);
+				deathTree.position.set(12, -1.8, -3);
+				scene.add(deathTree);
+
+				cityTree = createMagicalTreeFromGLB(cityMaterial, 3.5);
+				cityTree.position.set(12, -1.8, -6);
+				scene.add(cityTree);
+				
+				console.log("pohon.glb loaded, successfully spawned 5 portal trees! Height:", originalTreeHeight);
+				
+				// Chain load the collision world after the tree model is ready
+				loadCollisionWorld();
+			});
+
+			// --- AUTO-BOUNCING TRIANGLES & SPHERES (inside basket) ---
+			const bouncingShapes = [];
+			const BOUNCE_COLORS = [
+				0xff6b6b, 0xfeca57, 0x48dbfb, 0xff9ff3, 0x54a0ff,
+				0x5f27cd, 0x01a3a4, 0xf368e0, 0xff6348, 0x2ed573
+			];
+
+			// Basket center position — placed directly in front of the player spawn
+			const basketCenter = { x: 0.0, z: -4.0 };
+			let basketHeight = 1.0;
+			let basketWidth = 2.2;
+			let basketLength = 2.2;
+			let basketRadius = 0.9; // fallback boundary radius
+
+			for (let i = 0; i < 10; i++) {
+				const isTriangle = i < 5; // 5 triangles, 5 spheres
+				let geo;
+				if (isTriangle) {
+					const size = 0.12 + Math.random() * 0.15;
+					geo = new THREE.TetrahedronGeometry(size, 0);
+				} else {
+					const radius = 0.10 + Math.random() * 0.13;
+					geo = new THREE.SphereGeometry(radius, 8, 8);
+				}
+
+				const color = BOUNCE_COLORS[i % BOUNCE_COLORS.length];
+				const mat = new THREE.MeshStandardMaterial({
+					color: color,
+					roughness: 0.3,
+					metalness: 0.6,
+					emissive: color,
+					emissiveIntensity: 0.3
+				});
+				const mesh = new THREE.Mesh(geo, mat);
+
+				// Spawn clustered inside the basket center
+				const angle = (i / 10) * Math.PI * 2;
+				const dist = Math.random() * 0.4;
+				mesh.position.set(
+					basketCenter.x + Math.cos(angle) * dist,
+					-1.5, // Start slightly above the basket floor
+					basketCenter.z + Math.sin(angle) * dist
+				);
+				mesh.castShadow = true;
+				scene.add(mesh);
+
+				bouncingShapes.push({
+					mesh: mesh,
+					isTriangle: isTriangle,
+					velocityY: 1.5 + Math.random() * 2,
+					floorY: -1.8 + 0.25, // Fallback floor height (will be updated dynamically once cart loads)
+					speedX: (Math.random() - 0.5) * 1.0,
+					speedZ: (Math.random() - 0.5) * 1.0,
+					spinX: (Math.random() - 0.5) * 4,
+					spinY: (Math.random() - 0.5) * 4,
+					spinZ: (Math.random() - 0.5) * 4,
+					bounceTimer: Math.random() * 3,
+					jumpInterval: 1.5 + Math.random() * 2.5,
+					jumpForce: 2.5 + Math.random() * 3.5
+				});
+			}
+
+			// --- LOAD KERANJANG (BASKET) GLB MODEL ---
+			const basketLoader = new GLTFLoader();
+			basketLoader.load( 'assets/keranjang.glb', function( gltf ) {
+				const basketGroup = new THREE.Group();
+				const basketModel = gltf.scene;
+
+				// Calculate the bounding box of the loaded model
+				const box = new THREE.Box3().setFromObject(basketModel);
+				const size = new THREE.Vector3();
+				box.getSize(size);
+				const center = new THREE.Vector3();
+				box.getCenter(center);
+				
+				// Position the model inside the group so that the center is at (0, 0, 0)
+				// and the bottom of the bounding box sits exactly at y = 0
+				basketModel.position.set(-center.x, -box.min.y, -center.z);
+				basketGroup.add(basketModel);
+
+				basketModel.traverse( function( child ) {
+					if ( child.isMesh ) {
+						child.castShadow = true;
+						child.receiveShadow = true;
+					}
+				});
+
+				// Auto-scale to a standard visible size (say 2.2 units wide)
+				const maxDim = Math.max(size.x, size.z);
+				const scaleFactor = 2.2 / maxDim;
+				basketGroup.scale.set( scaleFactor, scaleFactor, scaleFactor );
+				
+				// Set actual position so the bottom of the basket sits on the floor
+				basketGroup.position.set( basketCenter.x, -1.8, basketCenter.z );
+				scene.add( basketGroup );
+
+				basketHeight = size.y * scaleFactor;
+				basketWidth = size.x * scaleFactor;
+				basketLength = size.z * scaleFactor;
+
+				// Bottom of the shopping cart's wire mesh section is at ~42% of its height
+				const actualFloorY = -1.8 + basketHeight * 0.42;
+				
+				// Dynamically move and set floor Y for all bouncing shapes to be inside the cart
+				bouncingShapes.forEach(shape => {
+					shape.floorY = actualFloorY;
+					shape.mesh.position.y = actualFloorY + Math.random() * 0.4;
+				});
+
+				console.log('Keranjang loaded, size:', size, 'scaleFactor:', scaleFactor, 'height:', basketHeight, 'floorY:', actualFloorY);
+			});
+
+
+			// Speaker setup for ambient forest positional music
+			const listener = new THREE.AudioListener();
+			camera.add( listener );
+			const audioElement = document.getElementById( 'music' );
+			const positionalAudio = new THREE.PositionalAudio( listener );
+			positionalAudio.setMediaElementSource( audioElement );
+			positionalAudio.setRefDistance( 2 );
+			positionalAudio.setDirectionalCone( 180, 230, 0.1 );
+			const helper = new PositionalAudioHelper( positionalAudio, 0.1 );
+
+			const gltfLoader = new GLTFLoader();
+			gltfLoader.load( ASSET_BASE + '/models/gltf/BoomBox.glb', function ( gltf ) {
+				const boomBox = gltf.scene;
+				boomBox.position.set( 7.7, -0.1, -9.5 );
+				boomBox.scale.set( 20, 20, 20 );
+				boomBox.traverse( function ( object ) {
+					if ( object.isMesh ) {
+						object.geometry.rotateY( - Math.PI );
+						object.castShadow = true;
+					}
+				} );
+				boomBox.add( positionalAudio );
+				scene.add( boomBox );
+				animate();
+			} );
+
+			// Sound is damped behind this wall
+			const wallGeometry = new THREE.BoxGeometry( 2, 4, 0.1 );
+			const wallMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000, transparent: true, opacity: 0 } );
+			const wall = new THREE.Mesh( wallGeometry, wallMaterial );
+			wall.position.set( 5.7, 5, 11.5 );
+			scene.add( wall );
+
+			for ( let i = 0; i < NUM_SPHERES; i ++ ) {
+				const sphere = new THREE.Mesh( sphereGeometry, sphereMaterial );
+				sphere.castShadow = true;
+				sphere.receiveShadow = true;
+				scene.add( sphere );
+				spheres.push( {
+					mesh: sphere,
+					collider: new THREE.Sphere( new THREE.Vector3( 0, - 100, 0 ), SPHERE_RADIUS ),
+					velocity: new THREE.Vector3()
+				} );
+			}
+
+			// --- ADDING 150+ FLOATING FIREFLIES ---
+			const fireflies = [];
+			const fireflyCount = 150;
+			const fireflyGeometry = new THREE.SphereGeometry(0.04, 6, 6);
+			const fireflyMaterial = new THREE.MeshBasicMaterial({
+				color: 0xd8f53c,
+				transparent: true,
+				opacity: 0.85
+			});
+
+			const fireflyGroup = new THREE.Group();
+			scene.add(fireflyGroup);
+
+			// Localized firefly lights (6 sources) to light up paths
+			const fireflyLights = [];
+			const maxLights = 6;
+			for (let i = 0; i < maxLights; i++) {
+				const light = new THREE.PointLight(0xd8f53c, 1.5, 8);
+				scene.add(light);
+				fireflyLights.push(light);
+			}
+
+			for (let i = 0; i < fireflyCount; i++) {
+				const mesh = new THREE.Mesh(fireflyGeometry, fireflyMaterial);
+				
+				// Scatter fireflies throughout the level space
+				const x = (Math.random() - 0.5) * 44;
+				const y = Math.random() * 5.5 - 0.5;
+				const z = (Math.random() - 0.5) * 44;
+				mesh.position.set(x, y, z);
+				fireflyGroup.add(mesh);
+				
+				fireflies.push({
+					mesh: mesh,
+					basePosition: mesh.position.clone(),
+					speedX: (Math.random() - 0.5) * 0.15,
+					speedY: 0.1 + Math.random() * 0.25,
+					speedZ: (Math.random() - 0.5) * 0.15,
+					phase: Math.random() * Math.PI * 2,
+					amplitude: 0.25 + Math.random() * 0.5
+				});
+			}
+
+
+			const worldOctree = new Octree();
+			const playerCollider = new Capsule( new THREE.Vector3( 0, 0.35, 0 ), new THREE.Vector3( 0, 1, 0 ), 0.35 );
+			const playerVelocity = new THREE.Vector3();
+			const playerDirection = new THREE.Vector3();
+
+			let playerOnFloor = false;
+			let mouseTime = 0;
+
+			const keyStates = {};
+			const vector1 = new THREE.Vector3();
+			const vector2 = new THREE.Vector3();
+			const vector3 = new THREE.Vector3();
+
+			document.addEventListener( 'keydown', ( event ) => {
+				keyStates[ event.code ] = true;
+			} );
+
+			document.addEventListener( 'keyup', ( event ) => {
+				keyStates[ event.code ] = false;
+			} );
+
+			// Start Overlay Buttons & Mouse locks
+			const overlay = document.getElementById('overlay');
+			const startButton = document.getElementById('startButton');
+
+			startButton.addEventListener('click', () => {
+				// Hide overlay
+				overlay.style.opacity = '0';
+				overlay.style.pointerEvents = 'none';
+				setTimeout(() => {
+					overlay.style.display = 'none';
+				}, 800);
+
+				// Request pointer lock
+				document.body.requestPointerLock();
+
+				// Play & setup Audio Context on user interaction
+				if (audioElement) {
+					audioElement.play().catch(err => console.error("Audio playback block:", err));
+				}
+				if (listener.context.state === 'suspended') {
+					listener.context.resume();
+				}
+			});
+
+			container.addEventListener( 'mousedown', () => {
+				if (overlay.style.display === 'none') {
+					document.body.requestPointerLock();
+				}
+				mouseTime = performance.now();
+			} );
+
+			document.addEventListener( 'mouseup', () => {
+				if (document.pointerLockElement !== null && overlay.style.display === 'none') {
+					throwBall();
+				}
+			} );
+
+			document.body.addEventListener( 'mousemove', ( event ) => {
+				if ( document.pointerLockElement === document.body ) {
+					camera.rotation.y -= event.movementX / 500;
+					camera.rotation.x -= event.movementY / 500;
+				}
+			} );
+
+			window.addEventListener( 'resize', onWindowResize );
+
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+
+			function throwBall() {
+				const sphere = spheres[ sphereIdx ];
+				camera.getWorldDirection( playerDirection );
+				sphere.collider.center.copy( playerCollider.end ).addScaledVector( playerDirection, playerCollider.radius * 1.5 );
+				const impulse = 15 + 30 * ( 1 - Math.exp( ( mouseTime - performance.now() ) * 0.001 ) );
+				sphere.velocity.copy( playerDirection ).multiplyScalar( impulse );
+				sphere.velocity.addScaledVector( playerVelocity, 2 );
+				sphereIdx = ( sphereIdx + 1 ) % spheres.length;
+			}
+
+			function playerCollisions() {
+				const result = worldOctree.capsuleIntersect( playerCollider );
+				playerOnFloor = false;
+				if ( result ) {
+					playerOnFloor = result.normal.y > 0;
+					if ( ! playerOnFloor ) {
+						playerVelocity.addScaledVector( result.normal, - result.normal.dot( playerVelocity ) );
+					}
+					playerCollider.translate( result.normal.multiplyScalar( result.depth ) );
+				}
+			}
+
+			function updatePlayer( deltaTime ) {
+				let damping = Math.exp( - 4 * deltaTime ) - 1;
+				if ( ! playerOnFloor ) {
+					playerVelocity.y -= GRAVITY * deltaTime;
+					damping *= 0.1;
+				}
+
+				playerVelocity.addScaledVector( playerVelocity, damping );
+				const deltaPosition = playerVelocity.clone().multiplyScalar( deltaTime );
+				playerCollider.translate( deltaPosition );
+				playerCollisions();
+				camera.position.copy( playerCollider.end );
+			}
+
+			function playerSphereCollision( sphere ) {
+				const center = vector1.addVectors( playerCollider.start, playerCollider.end ).multiplyScalar( 0.5 );
+				const sphere_center = sphere.collider.center;
+				const r = playerCollider.radius + sphere.collider.radius;
+				const r2 = r * r;
+				for ( const point of [ playerCollider.start, playerCollider.end, center ] ) {
+					const d2 = point.distanceToSquared( sphere_center );
+					if ( d2 < r2 ) {
+						const normal = vector1.subVectors( point, sphere_center ).normalize();
+						const v1 = vector2.copy( normal ).multiplyScalar( normal.dot( playerVelocity ) );
+						const v2 = vector3.copy( normal ).multiplyScalar( normal.dot( sphere.velocity ) );
+						playerVelocity.add( v2 ).sub( v1 );
+						sphere.velocity.add( v1 ).sub( v2 );
+						const d = ( r - Math.sqrt( d2 ) ) / 2;
+						sphere_center.addScaledVector( normal, - d );
+					}
+				}
+			}
+
+			function spheresCollisions() {
+				for ( let i = 0, length = spheres.length; i < length; i ++ ) {
+					const s1 = spheres[ i ];
+					for ( let j = i + 1; j < length; j ++ ) {
+						const s2 = spheres[ j ];
+						const d2 = s1.collider.center.distanceToSquared( s2.collider.center );
+						const r = s1.collider.radius + s2.collider.radius;
+						const r2 = r * r;
+
+						if ( d2 < r2 ) {
+							const normal = vector1.subVectors( s1.collider.center, s2.collider.center ).normalize();
+							const v1 = vector2.copy( normal ).multiplyScalar( normal.dot( s1.velocity ) );
+							const v2 = vector3.copy( normal ).multiplyScalar( normal.dot( s2.velocity ) );
+							s1.velocity.add( v2 ).sub( v1 );
+							s2.velocity.add( v1 ).sub( v2 );
+							const d = ( r - Math.sqrt( d2 ) ) / 2;
+							s1.collider.center.addScaledVector( normal, d );
+							s2.collider.center.addScaledVector( normal, - d );
+						}
+					}
+				}
+			}
+
+			function updateSpheres( deltaTime ) {
+				spheres.forEach( sphere => {
+					sphere.collider.center.addScaledVector( sphere.velocity, deltaTime );
+					const result = worldOctree.sphereIntersect( sphere.collider );
+
+					if ( result ) {
+						sphere.velocity.addScaledVector( result.normal, - result.normal.dot( sphere.velocity ) * 1.5 );
+						sphere.collider.center.add( result.normal.multiplyScalar( result.depth ) );
+					} else {
+						sphere.velocity.y -= GRAVITY * deltaTime;
+					}
+
+					const damping = Math.exp( - 1.5 * deltaTime ) - 1;
+					sphere.velocity.addScaledVector( sphere.velocity, damping );
+					playerSphereCollision( sphere );
+				} );
+
+				spheresCollisions();
+				for ( const sphere of spheres ) {
+					sphere.mesh.position.copy( sphere.collider.center );
+				}
+			}
+
+			function getForwardVector() {
+				camera.getWorldDirection( playerDirection );
+				playerDirection.y = 0;
+				playerDirection.normalize();
+				return playerDirection;
+			}
+
+			function getSideVector() {
+				camera.getWorldDirection( playerDirection );
+				playerDirection.y = 0;
+				playerDirection.normalize();
+				playerDirection.cross( camera.up );
+				return playerDirection;
+			}
+
+			function controls( deltaTime ) {
+				const speedDelta = deltaTime * ( playerOnFloor ? 25 : 8 );
+				if ( keyStates[ 'KeyW' ] ) {
+					playerVelocity.add( getForwardVector().multiplyScalar( speedDelta ) );
+				}
+				if ( keyStates[ 'KeyS' ] ) {
+					playerVelocity.add( getForwardVector().multiplyScalar( - speedDelta ) );
+				}
+				if ( keyStates[ 'KeyA' ] ) {
+					playerVelocity.add( getSideVector().multiplyScalar( - speedDelta ) );
+				}
+				if ( keyStates[ 'KeyD' ] ) {
+					playerVelocity.add( getSideVector().multiplyScalar( speedDelta ) );
+				}
+				if ( playerOnFloor ) {
+					if ( keyStates[ 'Space' ] ) {
+						playerVelocity.y = 15;
+					}
+				}
+			}
+
+			// --- DYNAMIC MAGICAL HOURGLASS ---
+			const hourglassCanvas = document.createElement('canvas');
+			hourglassCanvas.width = 256;
+			hourglassCanvas.height = 256;
+			const hourglassCtx = hourglassCanvas.getContext('2d');
+			const hourglassTexture = new THREE.CanvasTexture(hourglassCanvas);
+			
+			const hourglassMaterial = new THREE.SpriteMaterial({
+				map: hourglassTexture,
+				transparent: true
+			});
+			const hourglassSprite = new THREE.Sprite(hourglassMaterial);
+			hourglassSprite.position.set(5.7, 5.0, 11.5);
+			hourglassSprite.scale.set(3, 3, 3);
+			scene.add(hourglassSprite);
+
+			const hourglassLight = new THREE.PointLight(0xd8f53c, 3, 15);
+			hourglassLight.position.set(5.7, 5.2, 11.5);
+			scene.add(hourglassLight);
+
+			function drawHourglass(ctx, time) {
+				ctx.clearRect(0, 0, 256, 256);
+				
+				// Outer magical glow representing firefly energy
+				let aura = ctx.createRadialGradient(128, 128, 5, 128, 128, 100);
+				let glowPulse = 0.8 + Math.sin(time * 4) * 0.2;
+				aura.addColorStop(0, `rgba(216, 245, 60, ${0.4 * glowPulse})`);
+				aura.addColorStop(0.5, `rgba(216, 245, 60, ${0.1 * glowPulse})`);
+				aura.addColorStop(1, 'rgba(0, 0, 0, 0)');
+				ctx.fillStyle = aura;
+				ctx.beginPath();
+				ctx.arc(128, 128, 100, 0, Math.PI * 2);
+				ctx.fill();
+
+				// Timing parameters
+				const cycleDuration = 10;
+				const runDuration = 8;
+				const localTime = time % cycleDuration;
+				
+				let angle = 0;
+				let percent = 0;
+				let isFlipping = false;
+				
+				if (localTime < runDuration) {
+					percent = localTime / runDuration;
+					angle = 0;
+				} else {
+					percent = 1.0;
+					isFlipping = true;
+					const flipProgress = (localTime - runDuration) / (cycleDuration - runDuration);
+					const t = flipProgress * flipProgress * (3 - 2 * flipProgress);
+					angle = t * Math.PI;
+				}
+
+				ctx.save();
+				ctx.translate(128, 128);
+				ctx.rotate(angle);
+				
+				// Draw Golden Hourglass Frame
+				ctx.strokeStyle = '#d4af37';
+				ctx.lineWidth = 6;
+				ctx.lineCap = 'round';
+				ctx.shadowColor = 'rgba(212, 175, 55, 0.4)';
+				ctx.shadowBlur = 8;
+
+				// Top and Bottom plates
+				ctx.beginPath();
+				ctx.moveTo(-50, -80);
+				ctx.lineTo(50, -80);
+				ctx.moveTo(-50, 80);
+				ctx.lineTo(50, 80);
+				ctx.stroke();
+
+				// Vertical pillars
+				ctx.lineWidth = 4;
+				ctx.beginPath();
+				ctx.moveTo(-44, -80);
+				ctx.lineTo(-44, 80);
+				ctx.moveTo(44, -80);
+				ctx.lineTo(44, 80);
+				ctx.stroke();
+
+				// Glass bulbs
+				ctx.strokeStyle = 'rgba(230, 245, 255, 0.75)';
+				ctx.lineWidth = 3.5;
+				ctx.shadowColor = 'rgba(230, 245, 255, 0.3)';
+				ctx.shadowBlur = 6;
+				ctx.beginPath();
+				ctx.moveTo(-35, -75);
+				ctx.bezierCurveTo(-35, -30, -8, -10, -8, 0);
+				ctx.bezierCurveTo(-8, 10, -35, 30, -35, 75);
+				ctx.lineTo(35, 75);
+				ctx.bezierCurveTo(35, 30, 8, 10, 8, 0);
+				ctx.bezierCurveTo(8, -10, 35, -30, 35, -75);
+				ctx.closePath();
+				ctx.stroke();
+
+				// Draw Sand (Glowing yellow-green bioluminescent particles)
+				ctx.fillStyle = '#d8f53c';
+				ctx.shadowColor = '#d8f53c';
+				ctx.shadowBlur = 10;
+
+				// Top Bulb Sand (diminishing pile)
+				if (percent < 1.0) {
+					ctx.beginPath();
+					const topY = -75 + percent * 67; // moves down from -75 to -8
+					ctx.moveTo(-32, topY);
+					ctx.lineTo(32, topY);
+					ctx.bezierCurveTo(20, -8, 8, -4, 0, -4);
+					ctx.bezierCurveTo(-8, -4, -20, -8, -32, topY);
+					ctx.fill();
+				}
+
+				// Bottom Bulb Sand (growing pile)
+				if (percent > 0) {
+					ctx.beginPath();
+					const bottomY = 75 - percent * 52; // moves up from 75 to 23
+					ctx.moveTo(-32, 75);
+					ctx.quadraticCurveTo(0, bottomY, 32, 75);
+					ctx.closePath();
+					ctx.fill();
+					
+					// Sand pile peak
+					if (!isFlipping) {
+						ctx.beginPath();
+						ctx.moveTo(-10, 75);
+						ctx.quadraticCurveTo(0, bottomY - 6, 10, 75);
+						ctx.fill();
+					}
+				}
+
+				// Sand falling stream
+				if (percent < 1.0 && !isFlipping) {
+					ctx.strokeStyle = '#d8f53c';
+					ctx.lineWidth = 2.5;
+					ctx.beginPath();
+					ctx.moveTo(0, -4);
+					ctx.lineTo(0, 75 - percent * 52);
+					ctx.stroke();
+					
+					// Draw falling particles
+					ctx.fillStyle = '#ffffff';
+					const particleY = -4 + ((time * 90) % 70);
+					if (particleY < 75 - percent * 52) {
+						ctx.beginPath();
+						ctx.arc(0, particleY, 2, 0, Math.PI * 2);
+						ctx.fill();
+					}
+				}
+
+				ctx.restore();
+				ctx.shadowBlur = 0;
+			}
+
+
+			// --- CUTE WALL ART CANVAS TEXTURES ---
+			function createArtCanvas() {
+				const c = document.createElement('canvas');
+				c.width = 512; c.height = 512;
+				return { canvas: c, ctx: c.getContext('2d') };
+			}
+
+			// Art 1: Kawaii tree with face
+			function drawCuteTree(ctx) {
+				ctx.fillStyle = '#1a2a1a';
+				ctx.fillRect(0, 0, 512, 512);
+				// Starry night sky
+				ctx.fillStyle = '#ffe066';
+				for (let i = 0; i < 40; i++) {
+					const sx = Math.random() * 512, sy = Math.random() * 250;
+					ctx.beginPath(); ctx.arc(sx, sy, 1.5 + Math.random() * 2, 0, Math.PI * 2); ctx.fill();
+				}
+				// Moon
+				ctx.fillStyle = '#fff9c4';
+				ctx.beginPath(); ctx.arc(400, 80, 40, 0, Math.PI * 2); ctx.fill();
+				ctx.fillStyle = '#1a2a1a';
+				ctx.beginPath(); ctx.arc(380, 70, 35, 0, Math.PI * 2); ctx.fill();
+				// Ground
+				ctx.fillStyle = '#2d5a1e';
+				ctx.fillRect(0, 380, 512, 132);
+				ctx.fillStyle = '#3d7a2e';
+				ctx.beginPath(); ctx.ellipse(256, 380, 280, 30, 0, 0, Math.PI * 2); ctx.fill();
+				// Trunk
+				ctx.fillStyle = '#8B4513';
+				ctx.fillRect(230, 220, 52, 170);
+				// Crown - layered circles
+				const greens = ['#2ecc71', '#27ae60', '#1abc9c', '#55efc4'];
+				[[256, 180, 85], [210, 210, 60], [300, 210, 60], [256, 140, 65]].forEach(([x,y,r], i) => {
+					ctx.fillStyle = greens[i];
+					ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+				});
+				// Kawaii face on trunk
+				ctx.fillStyle = '#000';
+				ctx.beginPath(); ctx.arc(244, 280, 5, 0, Math.PI * 2); ctx.fill(); // Left eye
+				ctx.beginPath(); ctx.arc(268, 280, 5, 0, Math.PI * 2); ctx.fill(); // Right eye
+				// Blush
+				ctx.fillStyle = 'rgba(255,150,150,0.5)';
+				ctx.beginPath(); ctx.arc(235, 292, 8, 0, Math.PI * 2); ctx.fill();
+				ctx.beginPath(); ctx.arc(277, 292, 8, 0, Math.PI * 2); ctx.fill();
+				// Smile
+				ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
+				ctx.beginPath(); ctx.arc(256, 288, 10, 0.1 * Math.PI, 0.9 * Math.PI); ctx.stroke();
+				// Little flowers
+				['#ff6b6b','#feca57','#ff9ff3','#48dbfb'].forEach((c, i) => {
+					const fx = 80 + i * 100, fy = 410 + Math.sin(i) * 15;
+					ctx.fillStyle = c;
+					for (let p = 0; p < 5; p++) {
+						const ang = (p / 5) * Math.PI * 2;
+						ctx.beginPath(); ctx.arc(fx + Math.cos(ang)*8, fy + Math.sin(ang)*8, 5, 0, Math.PI*2); ctx.fill();
+					}
+					ctx.fillStyle = '#feca57';
+					ctx.beginPath(); ctx.arc(fx, fy, 4, 0, Math.PI*2); ctx.fill();
+				});
+			}
+
+			// Art 2: Cute mushroom house
+			function drawCuteMushroom(ctx) {
+				ctx.fillStyle = '#0f1a2e';
+				ctx.fillRect(0, 0, 512, 512);
+				// Stars
+				ctx.fillStyle = '#ffe066';
+				for (let i = 0; i < 30; i++) {
+					ctx.beginPath(); ctx.arc(Math.random()*512, Math.random()*200, 1+Math.random()*2, 0, Math.PI*2); ctx.fill();
+				}
+				// Ground
+				ctx.fillStyle = '#1a4a1a';
+				ctx.fillRect(0, 380, 512, 132);
+				// Mushroom stem
+				ctx.fillStyle = '#f5e6d3';
+				ctx.fillRect(220, 260, 72, 130);
+				// Door
+				ctx.fillStyle = '#8B4513';
+				ctx.beginPath(); ctx.arc(256, 390, 20, Math.PI, 0); ctx.fill();
+				ctx.fillRect(236, 370, 40, 20);
+				// Door knob
+				ctx.fillStyle = '#feca57';
+				ctx.beginPath(); ctx.arc(266, 378, 3, 0, Math.PI*2); ctx.fill();
+				// Window
+				ctx.fillStyle = '#ffeaa7';
+				ctx.beginPath(); ctx.arc(270, 310, 12, 0, Math.PI*2); ctx.fill();
+				ctx.strokeStyle = '#8B4513'; ctx.lineWidth = 2;
+				ctx.beginPath(); ctx.moveTo(270, 298); ctx.lineTo(270, 322); ctx.stroke();
+				ctx.beginPath(); ctx.moveTo(258, 310); ctx.lineTo(282, 310); ctx.stroke();
+				// Mushroom cap
+				ctx.fillStyle = '#ff6b6b';
+				ctx.beginPath(); ctx.arc(256, 260, 100, Math.PI, 0); ctx.fill();
+				// White dots on cap
+				ctx.fillStyle = '#fff';
+				[[200,220,12],[256,180,15],[310,220,12],[230,195,10],[280,195,10]].forEach(([x,y,r]) => {
+					ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+				});
+				// Little grass
+				ctx.strokeStyle = '#2ecc71'; ctx.lineWidth = 3;
+				for (let i = 0; i < 15; i++) {
+					const gx = 50 + i * 30;
+					ctx.beginPath(); ctx.moveTo(gx, 400); ctx.quadraticCurveTo(gx-5, 380, gx+3, 370); ctx.stroke();
+				}
+				// Fireflies near mushroom
+				ctx.fillStyle = '#d8f53c';
+				ctx.shadowColor = '#d8f53c'; ctx.shadowBlur = 12;
+				for (let i = 0; i < 8; i++) {
+					ctx.beginPath(); ctx.arc(100+Math.random()*312, 160+Math.random()*200, 3, 0, Math.PI*2); ctx.fill();
+				}
+				ctx.shadowBlur = 0;
+			}
+
+			// Art 3: Happy firefly family
+			function drawFireflyFamily(ctx) {
+				ctx.fillStyle = '#0a1628';
+				ctx.fillRect(0, 0, 512, 512);
+				// Big moon
+				ctx.fillStyle = '#fff9c4';
+				ctx.shadowColor = '#fff9c4'; ctx.shadowBlur = 30;
+				ctx.beginPath(); ctx.arc(256, 200, 100, 0, Math.PI * 2); ctx.fill();
+				ctx.shadowBlur = 0;
+				// Parent firefly
+				function drawFirefly(x, y, size, bodyColor) {
+					// Wings
+					ctx.fillStyle = 'rgba(200,230,255,0.3)';
+					ctx.beginPath(); ctx.ellipse(x-size*1.2, y-size*0.5, size*1.0, size*0.5, -0.3, 0, Math.PI*2); ctx.fill();
+					ctx.beginPath(); ctx.ellipse(x+size*1.2, y-size*0.5, size*1.0, size*0.5, 0.3, 0, Math.PI*2); ctx.fill();
+					// Body
+					ctx.fillStyle = bodyColor;
+					ctx.beginPath(); ctx.ellipse(x, y, size*0.8, size, 0, 0, Math.PI*2); ctx.fill();
+					// Glow butt
+					ctx.fillStyle = '#d8f53c';
+					ctx.shadowColor = '#d8f53c'; ctx.shadowBlur = 15;
+					ctx.beginPath(); ctx.arc(x, y+size*0.8, size*0.4, 0, Math.PI*2); ctx.fill();
+					ctx.shadowBlur = 0;
+					// Eyes
+					ctx.fillStyle = '#000';
+					ctx.beginPath(); ctx.arc(x-size*0.3, y-size*0.4, size*0.15, 0, Math.PI*2); ctx.fill();
+					ctx.beginPath(); ctx.arc(x+size*0.3, y-size*0.4, size*0.15, 0, Math.PI*2); ctx.fill();
+					// Sparkle in eyes
+					ctx.fillStyle = '#fff';
+					ctx.beginPath(); ctx.arc(x-size*0.25, y-size*0.45, size*0.06, 0, Math.PI*2); ctx.fill();
+					ctx.beginPath(); ctx.arc(x+size*0.35, y-size*0.45, size*0.06, 0, Math.PI*2); ctx.fill();
+					// Smile
+					ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
+					ctx.beginPath(); ctx.arc(x, y-size*0.15, size*0.25, 0.1*Math.PI, 0.9*Math.PI); ctx.stroke();
+					// Antennae
+					ctx.strokeStyle = '#555'; ctx.lineWidth = 1.5;
+					ctx.beginPath(); ctx.moveTo(x-size*0.2, y-size); ctx.quadraticCurveTo(x-size*0.5, y-size*1.6, x-size*0.3, y-size*1.8); ctx.stroke();
+					ctx.beginPath(); ctx.moveTo(x+size*0.2, y-size); ctx.quadraticCurveTo(x+size*0.5, y-size*1.6, x+size*0.3, y-size*1.8); ctx.stroke();
+					ctx.fillStyle = '#d8f53c';
+					ctx.beginPath(); ctx.arc(x-size*0.3, y-size*1.8, 3, 0, Math.PI*2); ctx.fill();
+					ctx.beginPath(); ctx.arc(x+size*0.3, y-size*1.8, 3, 0, Math.PI*2); ctx.fill();
+				}
+				drawFirefly(200, 300, 35, '#4a3728'); // Papa
+				drawFirefly(310, 310, 30, '#5a4738'); // Mama
+				drawFirefly(250, 370, 18, '#6a5748'); // Baby 1
+				drawFirefly(290, 380, 15, '#6a5748'); // Baby 2
+				// Scattered glow particles
+				ctx.fillStyle = '#d8f53c';
+				ctx.shadowColor = '#d8f53c'; ctx.shadowBlur = 8;
+				for (let i = 0; i < 20; i++) {
+					ctx.beginPath(); ctx.arc(Math.random()*512, Math.random()*512, 2, 0, Math.PI*2); ctx.fill();
+				}
+				ctx.shadowBlur = 0;
+				// Text
+				ctx.fillStyle = '#fff9c4';
+				ctx.font = 'bold 22px Outfit, sans-serif';
+				ctx.textAlign = 'center';
+				ctx.fillText('Keluarga Kunang-Kunang', 256, 470);
+			}
+
+			// Art 4: Sleeping cat on crescent moon
+			function drawSleepingCat(ctx) {
+				ctx.fillStyle = '#0d1b2a';
+				ctx.fillRect(0, 0, 512, 512);
+				// Stars
+				ctx.fillStyle = '#ffe066';
+				for (let i = 0; i < 50; i++) {
+					const r = 1 + Math.random() * 2;
+					ctx.beginPath(); ctx.arc(Math.random()*512, Math.random()*512, r, 0, Math.PI*2); ctx.fill();
+				}
+				// Crescent moon
+				ctx.fillStyle = '#ffeaa7';
+				ctx.shadowColor = '#ffeaa7'; ctx.shadowBlur = 25;
+				ctx.beginPath(); ctx.arc(256, 220, 90, 0, Math.PI * 2); ctx.fill();
+				ctx.shadowBlur = 0;
+				ctx.fillStyle = '#0d1b2a';
+				ctx.beginPath(); ctx.arc(290, 190, 80, 0, Math.PI * 2); ctx.fill();
+				// Cat body (sleeping on moon)
+				ctx.fillStyle = '#555';
+				ctx.beginPath(); ctx.ellipse(230, 265, 40, 20, -0.2, 0, Math.PI*2); ctx.fill();
+				// Cat head
+				ctx.beginPath(); ctx.arc(195, 255, 18, 0, Math.PI*2); ctx.fill();
+				// Ears
+				ctx.beginPath(); ctx.moveTo(182, 242); ctx.lineTo(178, 225); ctx.lineTo(192, 238); ctx.fill();
+				ctx.beginPath(); ctx.moveTo(202, 240); ctx.lineTo(205, 223); ctx.lineTo(212, 240); ctx.fill();
+				// Inner ears
+				ctx.fillStyle = '#ff9ff3';
+				ctx.beginPath(); ctx.moveTo(184, 242); ctx.lineTo(181, 230); ctx.lineTo(190, 240); ctx.fill();
+				ctx.beginPath(); ctx.moveTo(204, 241); ctx.lineTo(206, 228); ctx.lineTo(210, 241); ctx.fill();
+				// Closed eyes (sleeping)
+				ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
+				ctx.beginPath(); ctx.arc(190, 257, 5, 0, Math.PI); ctx.stroke();
+				ctx.beginPath(); ctx.arc(200, 257, 5, 0, Math.PI); ctx.stroke();
+				// Nose
+				ctx.fillStyle = '#ff9ff3';
+				ctx.beginPath(); ctx.moveTo(195, 262); ctx.lineTo(193, 265); ctx.lineTo(197, 265); ctx.fill();
+				// Tail (curled)
+				ctx.strokeStyle = '#555'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+				ctx.beginPath(); ctx.moveTo(270, 265); ctx.quadraticCurveTo(290, 250, 280, 230); ctx.stroke();
+				// ZZZ
+				ctx.fillStyle = '#fff9c4';
+				ctx.font = 'bold 18px Outfit, sans-serif';
+				ctx.fillText('z', 215, 230);
+				ctx.font = 'bold 24px Outfit, sans-serif';
+				ctx.fillText('Z', 230, 215);
+				ctx.font = 'bold 30px Outfit, sans-serif';
+				ctx.fillText('Z', 250, 195);
+				// Tiny fireflies around
+				ctx.fillStyle = '#d8f53c';
+				ctx.shadowColor = '#d8f53c'; ctx.shadowBlur = 10;
+				for (let i = 0; i < 12; i++) {
+					ctx.beginPath(); ctx.arc(50+Math.random()*412, 300+Math.random()*180, 2.5, 0, Math.PI*2); ctx.fill();
+				}
+				ctx.shadowBlur = 0;
+				// Caption
+				ctx.fillStyle = '#fff9c4';
+				ctx.font = 'bold 20px Outfit, sans-serif';
+				ctx.textAlign = 'center';
+				ctx.fillText('Selamat Tidur~ 🌙', 256, 480);
+			}
+
+			// Create and draw the 4 cute art canvases
+			const artCanvases = [createArtCanvas(), createArtCanvas(), createArtCanvas(), createArtCanvas()];
+			drawCuteTree(artCanvases[0].ctx);
+			drawCuteMushroom(artCanvases[1].ctx);
+			drawFireflyFamily(artCanvases[2].ctx);
+			drawSleepingCat(artCanvases[3].ctx);
+
+			const artTextures = artCanvases.map(ac => {
+				const tex = new THREE.CanvasTexture(ac.canvas);
+				tex.colorSpace = THREE.SRGBColorSpace;
+				return tex;
+			});
+
+			// --- PROCEDURALLY GENERATED MOSS TEXTURE ---
+			function createMossTexture() {
+				const canvas = document.createElement('canvas');
+				canvas.width = 512;
+				canvas.height = 512;
+				const ctx = canvas.getContext('2d');
+
+				// Base deep green/brown forest color
+				ctx.fillStyle = '#10250d';
+				ctx.fillRect(0, 0, 512, 512);
+
+				// Draw moss patches of different forest greens
+				const colors = ['#1d3c16', '#254a1d', '#132810', '#2d5424', '#0d1c0b', '#3b6b31'];
+				for (let i = 0; i < 600; i++) {
+					const x = Math.random() * 512;
+					const y = Math.random() * 512;
+					const r = 15 + Math.random() * 45;
+					
+					ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+					ctx.beginPath();
+					ctx.arc(x, y, r, 0, Math.PI * 2);
+					ctx.fill();
+				}
+
+				// Draw fine grass/moss leaf details
+				for (let i = 0; i < 20000; i++) {
+					const x = Math.random() * 512;
+					const y = Math.random() * 512;
+					const len = 4 + Math.random() * 9;
+					const angle = Math.random() * Math.PI * 2;
+					
+					ctx.strokeStyle = Math.random() > 0.5 ? '#3b6b31' : '#4d8742';
+					ctx.lineWidth = 1 + Math.random() * 1.5;
+					ctx.beginPath();
+					ctx.moveTo(x, y);
+					ctx.lineTo(x + Math.cos(angle) * len, y + Math.sin(angle) * len);
+					ctx.stroke();
+				}
+
+				// Add tiny yellow/green glowing spots (bioluminescent spores)
+				ctx.fillStyle = 'rgba(216, 245, 60, 0.55)';
+				ctx.shadowColor = 'rgba(216, 245, 60, 0.8)';
+				ctx.shadowBlur = 4;
+				for (let i = 0; i < 200; i++) {
+					const x = Math.random() * 512;
+					const y = Math.random() * 512;
+					ctx.beginPath();
+					ctx.arc(x, y, 1.2 + Math.random() * 1.8, 0, Math.PI * 2);
+					ctx.fill();
+				}
+				ctx.shadowBlur = 0;
+
+				const texture = new THREE.CanvasTexture(canvas);
+				texture.wrapS = THREE.RepeatWrapping;
+				texture.wrapT = THREE.RepeatWrapping;
+				texture.repeat.set(16, 16); // Tile across the wall meshes
+				return texture;
+			}
+
+			const mossTexture = createMossTexture();
+
+			// Wrapped collision loader to chain execution after pohon.glb loaded
+			function loadCollisionWorld() {
+				const loader = new GLTFLoader().setPath( ASSET_BASE + '/models/gltf/' );
+				loader.load( 'collision-world.glb', ( gltf ) => {
+					const meshesToRemove = [];
+					let artIndex = 0;
+					gltf.scene.traverse( child => {
+						if ( child.isMesh ) {
+							if ( child.name.includes("Cylinder") ) {
+								meshesToRemove.push(child);
+							}
+							// Replace plain concrete walls with lush green moss/grass texture
+							if ( child.name === 'MAP' ) {
+								child.material = new THREE.MeshStandardMaterial({
+									map: mossTexture,
+									roughness: 0.9,
+									metalness: 0.1
+								});
+							}
+							// Replace wall art textures with cute drawings
+							if ( child.name.match(/^art\d?$/) && artIndex < artTextures.length ) {
+								child.material = new THREE.MeshBasicMaterial({
+									map: artTextures[artIndex],
+									side: THREE.DoubleSide
+								});
+								artIndex++;
+							}
+							child.castShadow = true;
+							child.receiveShadow = true;
+							if ( child.material.map ) {
+								child.material.map.anisotropy = 4;
+							}
+						}
+					} );
+
+					// Spawn a giant centerpiece tree at the cylinder's position, then remove the cylinders from the scene graph
+					let spawnedCenterpieceTree = false;
+					meshesToRemove.forEach(mesh => {
+						const worldPos = new THREE.Vector3();
+						mesh.getWorldPosition(worldPos);
+
+						if (mesh.name === "Cylinder" && !spawnedCenterpieceTree) {
+							// Create a giant glowing emerald green centerpiece tree using the custom model (scaled to 6.0 units height)
+							const centerFoliageMat = new THREE.MeshBasicMaterial({ color: 0x4ade80 });
+							const centerTree = createMagicalTreeFromGLB(centerFoliageMat, 6.0);
+							
+							// Add a green glowing point light to illuminate the lobby
+							const centerTreeLight = new THREE.PointLight(0x4ade80, 4, 18);
+							centerTreeLight.position.set(worldPos.x, 1.5, worldPos.z);
+							scene.add(centerTreeLight);
+
+							// Position the tree
+							centerTree.position.set(worldPos.x, -1.8, worldPos.z);
+							scene.add(centerTree);
+							spawnedCenterpieceTree = true;
+						}
+
+						if (mesh.parent) {
+							mesh.parent.remove(mesh);
+						}
+					});
+
+					scene.add( gltf.scene );
+					worldOctree.fromGraphNode( gltf.scene );
+
+					const helper = new OctreeHelper( worldOctree );
+					helper.visible = false;
+					scene.add( helper );
+					animate();
+				} );
+			}
+
+			function teleportPlayerIfOob() {
+				if ( camera.position.y <= - 25 ) {
+					playerCollider.start.set( 0, 0.35, 0 );
+					playerCollider.end.set( 0, 1, 0 );
+					playerCollider.radius = 0.35;
+					camera.position.copy( playerCollider.end );
+					camera.rotation.set( 0, 0, 0 );
+				}
+			}
+			
+			function animate() {
+				// Single getDelta call stored in frameDelta to resolve original lecturer's double getDelta bug
+				const frameDelta = clock.getDelta();
+				const deltaTime = Math.min( 0.05, frameDelta ) / STEPS_PER_FRAME;
+				
+				for ( let i = 0; i < STEPS_PER_FRAME; i ++ ) {
+					controls( deltaTime );
+					updatePlayer( deltaTime );
+					updateSpheres( deltaTime );
+					teleportPlayerIfOob();
+				}
+				
+				if ( mixer ) mixer.update( frameDelta );
+				
+				const totalTime = clock.getElapsedTime();
+
+				// Animate floating fireflies
+				fireflies.forEach((ff, index) => {
+					ff.mesh.position.y = ff.basePosition.y + Math.sin(totalTime * ff.speedY + ff.phase) * ff.amplitude;
+					ff.mesh.position.x = ff.basePosition.x + Math.sin(totalTime * ff.speedX + ff.phase) * 2.0;
+					ff.mesh.position.z = ff.basePosition.z + Math.cos(totalTime * ff.speedZ + ff.phase) * 2.0;
+					
+					if (Math.abs(ff.mesh.position.x) > 25) ff.basePosition.x *= -1;
+					if (Math.abs(ff.mesh.position.z) > 25) ff.basePosition.z *= -1;
+
+					if (index < maxLights) {
+						fireflyLights[index].position.copy(ff.mesh.position);
+						fireflyLights[index].intensity = 1.2 + Math.sin(totalTime * 3.5 + index) * 0.4;
+					}
+				});
+
+				// Assign dynamic lights to active projectile spheres
+				projectileLights.forEach(l => l.position.set(0, -999, 0));
+				let activeLightIdx = 0;
+				spheres.forEach(s => {
+					if (s.collider.center.y > -50) {
+						if (activeLightIdx < maxProjLights) {
+							projectileLights[activeLightIdx].position.copy(s.collider.center);
+							projectileLights[activeLightIdx].intensity = 2.0 + Math.sin(totalTime * 8 + activeLightIdx) * 0.6;
+							activeLightIdx++;
+						}
+					}
+				});
+
+				// Draw and animate the magical hourglass
+				drawHourglass(hourglassCtx, totalTime);
+				hourglassTexture.needsUpdate = true;
+
+				// Bob the hourglass sprite and pulse its light
+				hourglassSprite.position.y = 5.0 + Math.sin(totalTime * 2.8) * 0.35;
+				hourglassLight.position.y = hourglassSprite.position.y + 0.1;
+				hourglassLight.intensity = 2.5 + Math.sin(totalTime * 5.5) * 0.6;
+
+				// Render canvas portal drawings
+				drawPortal1(p1.ctx, totalTime);
+				drawPortal2(p2.ctx, totalTime);
+				drawPortal3(p3.ctx, totalTime, frameDelta);
+				drawPortal4(p4.ctx, totalTime);
+				drawPortal5(p5.ctx, totalTime);
+
+				// Update texture buffers
+				texture1.needsUpdate = true;
+				texture2.needsUpdate = true;
+				texture3.needsUpdate = true;
+				texture4.needsUpdate = true;
+				texture5.needsUpdate = true;
+
+				// Update auto-bouncing triangles & spheres (constrained near basket)
+				bouncingShapes.forEach(shape => {
+					const dt = Math.min(frameDelta, 0.05);
+
+					// Gravity pull
+					shape.velocityY -= 15 * dt;
+
+					// Update vertical position
+					shape.mesh.position.y += shape.velocityY * dt;
+
+					// Bounce off floor
+					if (shape.mesh.position.y <= shape.floorY) {
+						shape.mesh.position.y = shape.floorY;
+						shape.velocityY = Math.abs(shape.velocityY) * 0.6;
+						if (shape.velocityY < 0.5) shape.velocityY = 0.5;
+					}
+
+					// Auto-jump timer
+					shape.bounceTimer += dt;
+					if (shape.bounceTimer >= shape.jumpInterval) {
+						shape.bounceTimer = 0;
+						shape.velocityY = shape.jumpForce;
+						shape.speedX = (Math.random() - 0.5) * 2;
+						shape.speedZ = (Math.random() - 0.5) * 2;
+					}
+
+					// Horizontal rolling/drifting
+					shape.mesh.position.x += shape.speedX * dt;
+					shape.mesh.position.z += shape.speedZ * dt;
+
+					// Constrain to basket rectangular boundary (inside the cart's wire mesh walls)
+					const dx = shape.mesh.position.x - basketCenter.x;
+					const dz = shape.mesh.position.z - basketCenter.z;
+					const halfW = basketWidth * 0.38; // stay within the basket width
+					const halfL = basketLength * 0.38; // stay within the basket length
+
+					if (Math.abs(dx) > halfW) {
+						shape.mesh.position.x = basketCenter.x + Math.sign(dx) * halfW;
+						shape.speedX = -shape.speedX * 0.8;
+					}
+					if (Math.abs(dz) > halfL) {
+						shape.mesh.position.z = basketCenter.z + Math.sign(dz) * halfL;
+						shape.speedZ = -shape.speedZ * 0.8;
+					}
+
+					// Tumbling rotation
+					shape.mesh.rotation.x += shape.spinX * dt;
+					shape.mesh.rotation.y += shape.spinY * dt;
+					if (shape.isTriangle) {
+						shape.mesh.rotation.z += shape.spinZ * dt;
+					}
+				});
+
+				renderer.render( scene, camera );
+				stats.update();
+				requestAnimationFrame( animate );
+			}
+		</script>
+	</body>
+</html>
