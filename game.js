@@ -1242,17 +1242,251 @@ function drawSleepingCat(ctx) {
 	ctx.fillText('Selamat Tidur~ 🌙', 256, 480);
 }
 
-const artCanvases = [createArtCanvas(), createArtCanvas(), createArtCanvas(), createArtCanvas()];
+function drawLanternNight(ctx) {
+	ctx.fillStyle = '#08121e'; ctx.fillRect(0, 0, 512, 512);
+	ctx.fillStyle = '#fff9c4';
+	for(let i=0; i<40; i++) {
+		ctx.beginPath(); ctx.arc(Math.random()*512, Math.random()*250, 1+Math.random()*1.5, 0, Math.PI*2); ctx.fill();
+	}
+	ctx.fillStyle = '#2c1810'; ctx.fillRect(150, 360, 212, 60);
+	ctx.fillStyle = '#1a3818'; ctx.fillRect(0, 410, 512, 102);
+	ctx.fillStyle = '#111'; ctx.fillRect(230, 200, 52, 160);
+	ctx.fillStyle = '#feca57'; ctx.shadowColor = '#feca57'; ctx.shadowBlur = 30;
+	ctx.fillRect(236, 215, 40, 130); ctx.shadowBlur = 0;
+	ctx.fillStyle = '#222';
+	ctx.beginPath(); ctx.moveTo(210, 200); ctx.lineTo(256, 150); ctx.lineTo(302, 200); ctx.fill();
+	ctx.fillStyle = '#d8f53c'; ctx.shadowColor = '#d8f53c'; ctx.shadowBlur = 12;
+	[[180, 240], [330, 220], [160, 310], [350, 300], [210, 140], [290, 160], [140, 200], [370, 240]].forEach(([x,y]) => {
+		ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
+	});
+	ctx.shadowBlur = 0;
+	ctx.fillStyle = '#fff9c4'; ctx.font = 'bold 20px Outfit, sans-serif'; ctx.textAlign = 'center';
+	ctx.fillText('Lentera & Kunang-Kunang 🏮', 256, 480);
+}
+
+function drawMoonLake(ctx) {
+	ctx.fillStyle = '#050c1a'; ctx.fillRect(0, 0, 512, 512);
+	ctx.fillStyle = '#fff9c4'; ctx.shadowColor = '#fff9c4'; ctx.shadowBlur = 25;
+	ctx.beginPath(); ctx.arc(256, 120, 50, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
+	ctx.fillStyle = '#0c1a2e';
+	ctx.beginPath(); ctx.moveTo(0, 300); ctx.lineTo(150, 180); ctx.lineTo(300, 300); ctx.fill();
+	ctx.beginPath(); ctx.moveTo(200, 300); ctx.lineTo(380, 160); ctx.lineTo(512, 300); ctx.fill();
+	ctx.fillStyle = '#0f2b48'; ctx.fillRect(0, 290, 512, 222);
+	ctx.fillStyle = 'rgba(255, 249, 196, 0.4)';
+	for(let i=0; i<15; i++) {
+		ctx.fillRect(236 - i*2, 310 + i*10, 40 + i*4, 4);
+	}
+	ctx.fillStyle = '#d8f53c'; ctx.shadowColor = '#d8f53c'; ctx.shadowBlur = 10;
+	for(let i=0; i<18; i++) {
+		ctx.beginPath(); ctx.arc(30 + i*26, 320 + Math.sin(i)*40, 3, 0, Math.PI*2); ctx.fill();
+	}
+	ctx.shadowBlur = 0;
+	ctx.fillStyle = '#fff9c4'; ctx.font = 'bold 20px Outfit, sans-serif'; ctx.textAlign = 'center';
+	ctx.fillText('Danau Refleksi Bulan 🌊', 256, 480);
+}
+
+function drawMagicJar(ctx) {
+	ctx.fillStyle = '#0a101d'; ctx.fillRect(0, 0, 512, 512);
+	ctx.fillStyle = '#2d1b0e'; ctx.fillRect(0, 360, 512, 152);
+	ctx.fillStyle = '#422817'; ctx.fillRect(0, 360, 512, 15);
+	ctx.fillStyle = 'rgba(180, 230, 255, 0.15)';
+	ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)'; ctx.lineWidth = 4;
+	ctx.beginPath(); ctx.roundRect(176, 160, 160, 210, 20); ctx.fill(); ctx.stroke();
+	ctx.fillStyle = '#8b5a2b'; ctx.fillRect(196, 135, 120, 28);
+	ctx.fillStyle = '#d8f53c'; ctx.shadowColor = '#d8f53c'; ctx.shadowBlur = 15;
+	[[210, 200], [270, 190], [230, 260], [290, 270], [200, 310], [260, 320], [300, 220]].forEach(([x,y]) => {
+		ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2); ctx.fill();
+	});
+	ctx.fillStyle = 'rgba(216, 245, 60, 0.12)';
+	ctx.beginPath(); ctx.moveTo(196, 135); ctx.lineTo(120, 0); ctx.lineTo(392, 0); ctx.lineTo(316, 135); ctx.fill();
+	ctx.shadowBlur = 0;
+	ctx.fillStyle = '#fff9c4'; ctx.font = 'bold 20px Outfit, sans-serif'; ctx.textAlign = 'center';
+	ctx.fillText('Toples Serbuk Cahaya 🔮', 256, 480);
+}
+
+function drawNightOwl(ctx) {
+	ctx.fillStyle = '#081624'; ctx.fillRect(0, 0, 512, 512);
+	ctx.fillStyle = '#fff9c4'; ctx.shadowColor = '#fff9c4'; ctx.shadowBlur = 20;
+	ctx.beginPath(); ctx.arc(256, 180, 80, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
+	ctx.fillStyle = '#3a2312'; ctx.fillRect(0, 320, 512, 35);
+	ctx.fillStyle = '#6b4c35';
+	ctx.beginPath(); ctx.ellipse(256, 260, 45, 60, 0, 0, Math.PI*2); ctx.fill();
+	ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
+	ctx.beginPath(); ctx.arc(238, 240, 10, 0, Math.PI); ctx.stroke();
+	ctx.beginPath(); ctx.arc(274, 240, 10, 0, Math.PI); ctx.stroke();
+	ctx.fillStyle = '#feca57';
+	ctx.beginPath(); ctx.moveTo(250, 250); ctx.lineTo(262, 250); ctx.lineTo(256, 262); ctx.fill();
+	ctx.fillStyle = '#d8f53c'; ctx.shadowColor = '#d8f53c'; ctx.shadowBlur = 10;
+	[[120, 310], [170, 312], [350, 310], [410, 312]].forEach(([x,y]) => {
+		ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI*2); ctx.fill();
+	});
+	ctx.shadowBlur = 0;
+	ctx.fillStyle = '#fff9c4'; ctx.font = 'bold 20px Outfit, sans-serif'; ctx.textAlign = 'center';
+	ctx.fillText('Burung Hantu & Sahabat 🦉', 256, 480);
+}
+
+function drawNightBlossom(ctx) {
+	ctx.fillStyle = '#0a0d1a'; ctx.fillRect(0, 0, 512, 512);
+	ctx.strokeStyle = '#2e7d32'; ctx.lineWidth = 4;
+	ctx.beginPath(); ctx.moveTo(256, 512); ctx.quadraticCurveTo(240, 380, 256, 260); ctx.stroke();
+	ctx.beginPath(); ctx.moveTo(256, 450); ctx.quadraticCurveTo(180, 370, 160, 300); ctx.stroke();
+	ctx.beginPath(); ctx.moveTo(256, 450); ctx.quadraticCurveTo(340, 370, 360, 300); ctx.stroke();
+	function drawFlower(x, y, petalColor, centerColor) {
+		ctx.fillStyle = petalColor; ctx.shadowColor = petalColor; ctx.shadowBlur = 15;
+		for(let i=0; i<6; i++) {
+			let ang = (i/6)*Math.PI*2;
+			ctx.beginPath(); ctx.arc(x + Math.cos(ang)*22, y + Math.sin(ang)*22, 15, 0, Math.PI*2); ctx.fill();
+		}
+		ctx.fillStyle = centerColor; ctx.shadowColor = centerColor; ctx.shadowBlur = 20;
+		ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
+	}
+	drawFlower(256, 250, '#a855f7', '#d8f53c');
+	drawFlower(160, 290, '#38bdf8', '#feca57');
+	drawFlower(360, 290, '#ec4899', '#d8f53c');
+	ctx.fillStyle = '#fff9c4'; ctx.font = 'bold 20px Outfit, sans-serif'; ctx.textAlign = 'center';
+	ctx.fillText('Bunga Malam Berkelip 🌸', 256, 480);
+}
+
+function drawSweetDreamsCloud(ctx) {
+	ctx.fillStyle = '#0b1329'; ctx.fillRect(0, 0, 512, 512);
+	ctx.fillStyle = '#feca57'; ctx.shadowColor = '#feca57'; ctx.shadowBlur = 20;
+	ctx.beginPath(); ctx.arc(256, 230, 110, 0, Math.PI*2); ctx.fill();
+	ctx.fillStyle = '#0b1329'; ctx.shadowBlur = 0;
+	ctx.beginPath(); ctx.arc(300, 200, 100, 0, Math.PI*2); ctx.fill();
+	ctx.fillStyle = '#e2e8f0'; ctx.shadowColor = '#e2e8f0'; ctx.shadowBlur = 15;
+	[[200, 250, 30], [230, 230, 40], [270, 230, 35], [300, 250, 30]].forEach(([x,y,r]) => {
+		ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+	}); ctx.shadowBlur = 0;
+	ctx.strokeStyle = '#475569'; ctx.lineWidth = 3;
+	ctx.beginPath(); ctx.arc(235, 238, 6, 0, Math.PI); ctx.stroke();
+	ctx.beginPath(); ctx.arc(265, 238, 6, 0, Math.PI); ctx.stroke();
+	ctx.fillStyle = '#fff9c4'; ctx.font = 'bold 20px Outfit, sans-serif'; ctx.textAlign = 'center';
+	ctx.fillText('Awan Mimpi Indah ☁️', 256, 480);
+}
+
+const artCanvases = Array.from({ length: 10 }, () => createArtCanvas());
 drawCuteTree(artCanvases[0].ctx);
 drawCuteMushroom(artCanvases[1].ctx);
 drawFireflyFamily(artCanvases[2].ctx);
 drawSleepingCat(artCanvases[3].ctx);
+drawLanternNight(artCanvases[4].ctx);
+drawMoonLake(artCanvases[5].ctx);
+drawMagicJar(artCanvases[6].ctx);
+drawNightOwl(artCanvases[7].ctx);
+drawNightBlossom(artCanvases[8].ctx);
+drawSweetDreamsCloud(artCanvases[9].ctx);
 
 const artTextures = artCanvases.map(ac => {
 	const tex = new THREE.CanvasTexture(ac.canvas);
 	tex.colorSpace = THREE.SRGBColorSpace;
+	tex.center.set(0.5, 0.5);
+	tex.rotation = Math.PI; // Flip 180° so drawings are right-side up on wall meshes
 	return tex;
 });
+
+function createMuseumFrame(texture, title, x, y, z, rotY, width = 2.4, height = 1.8) {
+	const group = new THREE.Group();
+
+	// 1. Outer Frame (Mahogany Wood)
+	const frameThickness = 0.15;
+	const frameDepth = 0.1;
+	const frameGeo = new THREE.BoxGeometry(width + frameThickness, height + frameThickness, frameDepth);
+	const frameMat = new THREE.MeshStandardMaterial({
+		color: 0x2b1810,
+		roughness: 0.35,
+		metalness: 0.25
+	});
+	const frameMesh = new THREE.Mesh(frameGeo, frameMat);
+	group.add(frameMesh);
+
+	// Gold inner trim
+	const trimGeo = new THREE.BoxGeometry(width + 0.04, height + 0.04, frameDepth + 0.02);
+	const trimMat = new THREE.MeshStandardMaterial({
+		color: 0xd4af37,
+		roughness: 0.3,
+		metalness: 0.7
+	});
+	const trimMesh = new THREE.Mesh(trimGeo, trimMat);
+	group.add(trimMesh);
+
+	// 2. Painting Canvas
+	const canvasGeo = new THREE.PlaneGeometry(width, height);
+	const canvasMat = new THREE.MeshStandardMaterial({
+		map: texture,
+		roughness: 0.6,
+		metalness: 0.05
+	});
+	const canvasMesh = new THREE.Mesh(canvasGeo, canvasMat);
+	canvasMesh.position.z = frameDepth / 2 + 0.015;
+	group.add(canvasMesh);
+
+	// 3. Title Plaque
+	const plaqueCanvas = document.createElement('canvas');
+	plaqueCanvas.width = 512; plaqueCanvas.height = 128;
+	const pCtx = plaqueCanvas.getContext('2d');
+	pCtx.fillStyle = '#1c130d'; pCtx.fillRect(0, 0, 512, 128);
+	pCtx.strokeStyle = '#d4af37'; pCtx.lineWidth = 6;
+	pCtx.strokeRect(6, 6, 500, 116);
+	pCtx.fillStyle = '#feca57'; pCtx.font = 'bold 24px Outfit, sans-serif';
+	pCtx.textAlign = 'center'; pCtx.fillText(title, 256, 55);
+	pCtx.fillStyle = '#a7f3d0'; pCtx.font = '18px Outfit, sans-serif';
+	pCtx.fillText('Museum Kunang-Kunang', 256, 90);
+
+	const plaqueTex = new THREE.CanvasTexture(plaqueCanvas);
+	plaqueTex.colorSpace = THREE.SRGBColorSpace;
+	const plaqueGeo = new THREE.PlaneGeometry(width * 0.65, 0.45);
+	const plaqueMat = new THREE.MeshStandardMaterial({
+		map: plaqueTex,
+		roughness: 0.4,
+		metalness: 0.3
+	});
+	const plaqueMesh = new THREE.Mesh(plaqueGeo, plaqueMat);
+	plaqueMesh.position.set(0, -(height / 2 + 0.35), frameDepth / 2 + 0.015);
+	group.add(plaqueMesh);
+
+	// 4. Museum Spotlight
+	const spot = new THREE.PointLight(0xfff5ea, 1.8, 6);
+	spot.position.set(0, height / 2 + 0.6, 0.8);
+	group.add(spot);
+
+	group.position.set(x, y, z);
+	group.rotation.y = rotY;
+	return group;
+}
+
+function buildMuseumGallery() {
+	const galleryGroup = new THREE.Group();
+	
+	const museumTitles = [
+		'Lentera & Kunang-Kunang 🏮',
+		'Danau Refleksi Bulan 🌊',
+		'Toples Serbuk Cahaya 🔮',
+		'Burung Hantu & Sahabat 🦉',
+		'Bunga Malam Berkelip 🌸',
+		'Awan Mimpi Indah ☁️'
+	];
+
+	const framePositions = [
+		// Corridor Left Wall (X = -4.15)
+		{ x: -4.15, y: 2.0, z: 2.0, rotY: Math.PI / 2, texIdx: 4, title: museumTitles[0] },
+		{ x: -4.15, y: 2.0, z: 7.0, rotY: Math.PI / 2, texIdx: 5, title: museumTitles[1] },
+
+		// Corridor Right Wall (X = 4.15)
+		{ x: 4.15, y: 2.0, z: 2.0, rotY: -Math.PI / 2, texIdx: 6, title: museumTitles[2] },
+		{ x: 4.15, y: 2.0, z: 7.0, rotY: -Math.PI / 2, texIdx: 7, title: museumTitles[3] },
+
+		// Back Wall (Z = -12.1)
+		{ x: -3.0, y: 2.2, z: -12.1, rotY: 0, texIdx: 8, title: museumTitles[4] },
+		{ x: 3.0, y: 2.2, z: -12.1, rotY: 0, texIdx: 9, title: museumTitles[5] }
+	];
+
+	framePositions.forEach(p => {
+		const frame = createMuseumFrame(artTextures[p.texIdx], p.title, p.x, p.y, p.z, p.rotY);
+		galleryGroup.add(frame);
+	});
+
+	scene.add(galleryGroup);
+}
 
 // --- MOSS TEXTURE ---
 function createMossTexture() {
@@ -1373,6 +1607,7 @@ function loadCollisionWorld() {
 
 		scene.add( gltf.scene );
 		worldOctree.fromGraphNode( gltf.scene );
+		buildMuseumGallery();
 
 		const helper = new OctreeHelper( worldOctree );
 		helper.visible = false;
