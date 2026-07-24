@@ -1705,17 +1705,17 @@ function buildMuseumGallery() {
 		{ x: -4.34, y: 1.5, z: 6.5, rotY: Math.PI / 2, texIdx: 14, title: museumTitles[14] },
 		{ x: -4.34, y: 1.5, z: 10.5, rotY: Math.PI / 2, texIdx: 15, title: museumTitles[15] },
 
-		// Section 3: Main Starting Corridor Right Wall (X = 7.58, height Y = 1.5)
-		{ x: 7.58, y: 1.5, z: -9.5, rotY: -Math.PI / 2, texIdx: 0, title: museumTitles[0] },
-		{ x: 7.58, y: 1.5, z: -5.5, rotY: -Math.PI / 2, texIdx: 1, title: museumTitles[1] },
-		{ x: 7.58, y: 1.5, z: -1.5, rotY: -Math.PI / 2, texIdx: 2, title: museumTitles[2] },
+		// Section 3 (was floating X=7.58 - moved to confirmed wall X=19.01 extended Z)
+		{ x: 19.01, y: 3.6, z: -3.5, rotY: -Math.PI / 2, texIdx: 0, title: museumTitles[0] },
+		{ x: 19.01, y: 3.6, z: 14.0, rotY: -Math.PI / 2, texIdx: 1, title: museumTitles[1] },
+		{ x: 19.01, y: 3.6, z: 17.5, rotY: -Math.PI / 2, texIdx: 2, title: museumTitles[2] },
 
-		// Section 4: Front Boundary Wall (Z = 12.35, height Y = 1.5)
-		{ x: -2.0, y: 1.5, z: 12.35, rotY: Math.PI, texIdx: 3, title: museumTitles[3] },
-		{ x: 2.0, y: 1.5, z: 12.35, rotY: Math.PI, texIdx: 4, title: museumTitles[4] },
-		{ x: 6.0, y: 1.5, z: 12.35, rotY: Math.PI, texIdx: 5, title: museumTitles[5] },
-		{ x: 10.0, y: 1.5, z: 12.35, rotY: Math.PI, texIdx: 6, title: museumTitles[6] },
-		{ x: 14.0, y: 1.5, z: 12.35, rotY: Math.PI, texIdx: 7, title: museumTitles[7] }
+		// Section 4 (was floating Z=12.35 - moved to confirmed wall X=19.01 negative Z extended)
+		{ x: 19.01, y: 3.6, z: -14.5, rotY: -Math.PI / 2, texIdx: 3, title: museumTitles[3] },
+		{ x: 19.01, y: 3.6, z: -18.0, rotY: -Math.PI / 2, texIdx: 4, title: museumTitles[4] },
+		{ x: 19.01, y: 3.6, z: -21.5, rotY: -Math.PI / 2, texIdx: 5, title: museumTitles[5] },
+		{ x: 19.01, y: 3.6, z: -25.0, rotY: -Math.PI / 2, texIdx: 6, title: museumTitles[6] },
+		{ x: 19.01, y: 3.6, z: -28.5, rotY: -Math.PI / 2, texIdx: 7, title: museumTitles[7] }
 	];
 
 	framePositions.forEach(p => {
