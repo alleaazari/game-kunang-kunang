@@ -1536,15 +1536,15 @@ function buildMuseumGallery() {
 	];
 
 	const framePositions = [
-		// Back Wall (flush against real solid wall at Z = -12.33)
-		{ x: -2.0, y: 1.7, z: -12.33, rotY: 0, texIdx: 4, title: museumTitles[0] },
-		{ x: 2.0, y: 1.7, z: -12.33, rotY: 0, texIdx: 5, title: museumTitles[1] },
-		{ x: 13.0, y: 1.7, z: -12.33, rotY: 0, texIdx: 6, title: museumTitles[2] },
+		// Main Hallway Left Wall (flush against empty green wall at X = -4.34, Y = 1.5)
+		{ x: -4.34, y: 1.5, z: 1.5, rotY: Math.PI / 2, texIdx: 4, title: museumTitles[0] },
+		{ x: -4.34, y: 1.5, z: 5.5, rotY: Math.PI / 2, texIdx: 5, title: museumTitles[1] },
+		{ x: -4.34, y: 1.5, z: 9.5, rotY: Math.PI / 2, texIdx: 6, title: museumTitles[2] },
 
-		// Far Right Wall (flush against real solid wall at X = 19.01)
-		{ x: 19.01, y: 2.0, z: 1.5, rotY: -Math.PI / 2, texIdx: 7, title: museumTitles[3] },
-		{ x: 19.01, y: 2.0, z: 6.5, rotY: -Math.PI / 2, texIdx: 8, title: museumTitles[4] },
-		{ x: 19.01, y: 2.0, z: -8.5, rotY: -Math.PI / 2, texIdx: 9, title: museumTitles[5] }
+		// Main Hallway Right Wall (flush against empty green wall at X = 7.58, Y = 1.5)
+		{ x: 7.58, y: 1.5, z: 1.5, rotY: -Math.PI / 2, texIdx: 7, title: museumTitles[3] },
+		{ x: 7.58, y: 1.5, z: 5.5, rotY: -Math.PI / 2, texIdx: 8, title: museumTitles[4] },
+		{ x: 7.58, y: 1.5, z: 9.5, rotY: -Math.PI / 2, texIdx: 9, title: museumTitles[5] }
 	];
 
 	framePositions.forEach(p => {
