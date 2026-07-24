@@ -1344,7 +1344,10 @@ function drawNightBlossom(ctx) {
 	drawFlower(160, 290, '#38bdf8', '#feca57');
 	drawFlower(360, 290, '#ec4899', '#d8f53c');
 	ctx.fillStyle = '#fff9c4'; ctx.font = 'bold 20px Outfit, sans-serif'; ctx.textAlign = 'center';
-	ctx.fillText('Bunga Malfunction drawSweetDreamsCloud(ctx) {
+	ctx.fillText('Bunga Malam Berkelip 🌸', 256, 480);
+}
+
+function drawSweetDreamsCloud(ctx) {
 	ctx.fillStyle = '#0b1329'; ctx.fillRect(0, 0, 512, 512);
 	ctx.fillStyle = '#feca57'; ctx.shadowColor = '#feca57'; ctx.shadowBlur = 20;
 	ctx.beginPath(); ctx.arc(256, 230, 110, 0, Math.PI*2); ctx.fill();
