@@ -1497,6 +1497,7 @@ const tamanModelButtons = []; // Panorama and Model buttons
 let tamanModelBackToMazeSprite; // return button to starting maze
 let tamanModelTvTexture; // dynamic screen texture
 let tamanModelTextCanvas, tamanModelTextTexture; // canvas for floating text labels
+const panoramaInfoSpheres = []; // clickable info orbs inside the 360 panorama
 
 // Raycast & Interaction
 const raycaster = new THREE.Raycaster();
@@ -2738,7 +2739,8 @@ window.addEventListener('mousemove', () => {
 		const btnTargets = [tamanModelBackToMazeSprite, ...tamanModelButtons].filter(Boolean);
 		const btnHits = raycaster.intersectObjects(btnTargets, false);
 		const shapeHits = raycaster.intersectObjects(tamanModelShapes, false);
-		document.body.style.cursor = (btnHits.length > 0 || shapeHits.length > 0) ? 'pointer' : 'default';
+		const infoHits = raycaster.intersectObjects(panoramaInfoSpheres.filter(s => s.visible), false);
+		document.body.style.cursor = (btnHits.length > 0 || shapeHits.length > 0 || infoHits.length > 0) ? 'pointer' : 'default';
 	} else {
 		if (document.body.style.cursor === 'pointer') {
 			document.body.style.cursor = 'default';
@@ -2964,6 +2966,67 @@ function createTamanModelScene() {
 		console.log("panorama_taman.jpg loaded successfully!");
 	}, undefined, (err) => {
 		console.error("Failed to load panorama_taman.jpg:", err);
+	});
+
+	// 7b. Create interactive info spheres for Panorama mode
+	const panoInfoData = [
+		{
+			name: "🌱 Tanaman",
+			desc: "Tanaman adalah makhluk hidup yang mampu menghasilkan makanan sendiri melalui fotosintesis. Mereka menyerap karbon dioksida (CO₂) dan air, lalu mengubahnya menjadi glukosa dan oksigen menggunakan energi cahaya matahari. Tanaman juga berperan penting dalam menjaga keseimbangan ekosistem, mencegah erosi tanah, dan menyediakan habitat bagi berbagai hewan.",
+			pos: { x: -8, y: -1, z: -12 },
+			color: 0x22c55e
+		},
+		{
+			name: "🌳 Pohon",
+			desc: "Pohon adalah tanaman berkayu besar yang memiliki batang utama, cabang, dan daun. Pohon menghasilkan oksigen, menyimpan karbon, menyediakan naungan, dan menjadi rumah bagi burung, serangga, dan hewan lainnya. Satu pohon dewasa dapat menghasilkan oksigen yang cukup untuk 2-4 orang dalam sehari. Akar pohon juga berfungsi menahan tanah agar tidak longsor.",
+			pos: { x: 10, y: 0, z: -10 },
+			color: 0x15803d
+		},
+		{
+			name: "💨 Oksigen",
+			desc: "Oksigen (O₂) adalah gas yang sangat penting bagi kehidupan. Setiap makhluk hidup di bumi membutuhkan oksigen untuk bernapas. Tanaman dan pohon adalah produsen utama oksigen di daratan melalui proses fotosintesis. Taman dan hutan kota berperan sebagai \"paru-paru kota\" yang menyuplai udara bersih dan segar bagi penduduk sekitar.",
+			pos: { x: 0, y: 3, z: -14 },
+			color: 0x38bdf8
+		},
+		{
+			name: "✨ Kunang-Kunang",
+			desc: "Kunang-kunang (firefly) adalah serangga kecil yang mampu menghasilkan cahaya sendiri melalui proses bioluminesensi. Cahaya kuning-hijau yang berkedip di malam hari digunakan untuk menarik pasangan dan berkomunikasi. Kunang-kunang hidup di lingkungan yang lembap dan alami \u2014 kehadiran mereka menjadi indikator bahwa ekosistem taman dalam kondisi sehat.",
+			pos: { x: 12, y: -1, z: 5 },
+			color: 0xd8f53c
+		},
+		{
+			name: "🏡 Taman",
+			desc: "Taman adalah ruang terbuka hijau yang dirancang untuk keindahan, rekreasi, dan pelestarian alam. Taman menyediakan tempat bersantai, berolahraga, dan berinteraksi dengan alam. Taman kota membantu menurunkan suhu udara, mengurangi polusi, meningkatkan kualitas hidup, dan menjadi habitat penting bagi keanekaragaman hayati di tengah perkotaan.",
+			pos: { x: -12, y: 1, z: 8 },
+			color: 0xa855f7
+		}
+	];
+
+	panoInfoData.forEach(info => {
+		const sphereGeo = new THREE.SphereGeometry(1.2, 24, 24);
+		const sphereMat = new THREE.MeshBasicMaterial({
+			color: info.color,
+			transparent: true,
+			opacity: 0.7
+		});
+		const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+		sphere.position.set(info.pos.x, info.pos.y, info.pos.z);
+		sphere.userData.infoName = info.name;
+		sphere.userData.infoDesc = info.desc;
+		sphere.visible = false; // only visible in panorama mode
+		sceneTamanModel.add(sphere);
+		panoramaInfoSpheres.push(sphere);
+
+		// Add a glowing ring around the sphere
+		const ringGeo = new THREE.RingGeometry(1.4, 1.7, 32);
+		const ringMat = new THREE.MeshBasicMaterial({
+			color: info.color,
+			side: THREE.DoubleSide,
+			transparent: true,
+			opacity: 0.35
+		});
+		const ring = new THREE.Mesh(ringGeo, ringMat);
+		sphere.add(ring); // child of sphere, inherits visibility
 	});
 
 	// 8. OrbitControls setup (with scroll-wheel zoom enabled)
@@ -3269,12 +3332,15 @@ function setTamanModelPanorama(active) {
 				
 				// Keep the back button visible so they can return
 				tamanModelBackToMazeSprite.position.set(0, 2.5, -4); // place closer to look around
-				
+
+				// Show info spheres
+				panoramaInfoSpheres.forEach(s => s.visible = true);
+
 				// Update instructions
 				const descCard = document.getElementById('shape-desc-card');
 				if (descCard) {
 					descCard.querySelector('.shape-desc-title').textContent = "Panorama Taman 360°";
-					descCard.querySelector('.shape-desc-body').textContent = "Geser mouse/layar untuk berputar dan melihat keindahan pemandangan taman malam 360 derajat. Klik tombol di depan untuk kembali.";
+					descCard.querySelector('.shape-desc-body').textContent = "Geser mouse untuk berputar. Klik bola berwarna untuk melihat deskripsi tentang taman, tanaman, pohon, oksigen, dan kunang-kunang.";
 					descCard.querySelector('.shape-desc-name').textContent = "Mode Panorama";
 				}
 			} else {
@@ -3283,7 +3349,15 @@ function setTamanModelPanorama(active) {
 				if (panoramaSphere) panoramaSphere.visible = false;
 				
 				tamanModelBackToMazeSprite.position.set(0, 3.2, -6);
-				
+
+				// Hide info spheres & description card
+				panoramaInfoSpheres.forEach(s => s.visible = false);
+				const shapeCardPano = document.getElementById('taman-model-shape-card');
+				if (shapeCardPano) {
+					shapeCardPano.style.opacity = '0';
+					shapeCardPano.style.display = 'none';
+				}
+
 				// Update instructions
 				const descCard = document.getElementById('shape-desc-card');
 				if (descCard) {
@@ -3355,6 +3429,44 @@ function checkTamanModelClick() {
 				shapeCard.style.opacity = '0';
 				setTimeout(() => shapeCard.style.display = 'none', 400);
 				tamanModelShapes.forEach((s, i) => s.scale.copy(tamanModelShapeOriginalScales[i]));
+			}
+		}
+	}
+
+	// Check panorama info spheres — show description card top-right
+	if (isTamanModelPanorama && panoramaInfoSpheres.length > 0) {
+		const intersectsInfo = raycaster.intersectObjects(panoramaInfoSpheres, false);
+		if (intersectsInfo.length > 0) {
+			const hitInfo = intersectsInfo[0].object;
+			const shapeCard = document.getElementById('taman-model-shape-card');
+			if (shapeCard && hitInfo.userData.infoName) {
+				shapeCard.querySelector('.taman-model-shape-tag').textContent = '📖 Info Taman';
+				shapeCard.querySelector('.taman-model-shape-title').textContent = hitInfo.userData.infoName;
+				shapeCard.querySelector('.taman-model-shape-body').textContent = hitInfo.userData.infoDesc;
+				shapeCard.style.display = 'block';
+				setTimeout(() => shapeCard.style.opacity = '1', 20);
+
+				// Highlight the clicked sphere
+				panoramaInfoSpheres.forEach(s => {
+					if (s === hitInfo) {
+						s.material.opacity = 1.0;
+						s.scale.set(1.3, 1.3, 1.3);
+					} else {
+						s.material.opacity = 0.7;
+						s.scale.set(1, 1, 1);
+					}
+				});
+			}
+		} else {
+			// Clicked empty space in panorama — hide card, reset spheres
+			const shapeCard = document.getElementById('taman-model-shape-card');
+			if (shapeCard && shapeCard.style.opacity !== '0') {
+				shapeCard.style.opacity = '0';
+				setTimeout(() => shapeCard.style.display = 'none', 400);
+				panoramaInfoSpheres.forEach(s => {
+					s.material.opacity = 0.7;
+					s.scale.set(1, 1, 1);
+				});
 			}
 		}
 	}
