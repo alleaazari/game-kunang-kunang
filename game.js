@@ -1376,20 +1376,89 @@ drawNightOwl(artCanvases[7].ctx);
 drawNightBlossom(artCanvases[8].ctx);
 drawSweetDreamsCloud(artCanvases[9].ctx);
 
-const artTextures = artCanvases.map(ac => {
+// Textures for GLTF meshes (which have inverted UVs)
+const gltfArtTextures = artCanvases.slice(0, 4).map(ac => {
 	const tex = new THREE.CanvasTexture(ac.canvas);
 	tex.colorSpace = THREE.SRGBColorSpace;
 	tex.center.set(0.5, 0.5);
-	tex.rotation = Math.PI; // Flip 180° so drawings are right-side up on wall meshes
+	tex.rotation = Math.PI; // Flip 180° for GLTF inverted UVs
 	return tex;
 });
+
+// Textures for custom THREE.PlaneGeometry museum frames (standard UVs)
+const planeArtTextures = artCanvases.map(ac => {
+	const tex = new THREE.CanvasTexture(ac.canvas);
+	tex.colorSpace = THREE.SRGBColorSpace;
+	// rotation = 0 for standard PlaneGeometry
+	return tex;
+});
+
+function createMuseumSpotlightFixture() {
+	const fixtureGroup = new THREE.Group();
+
+	// 1. Brass Wall Mount Plate (attached to wall surface)
+	const mountGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.04, 16);
+	const brassMat = new THREE.MeshStandardMaterial({
+		color: 0xd4af37, // polished gold brass
+		metalness: 0.85,
+		roughness: 0.2
+	});
+	const mountMesh = new THREE.Mesh(mountGeo, brassMat);
+	mountMesh.rotation.x = Math.PI / 2;
+	mountMesh.position.set(0, 0, -0.02);
+	fixtureGroup.add(mountMesh);
+
+	// 2. Curved Lamp Arm extending out from wall
+	const armGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.42, 12);
+	const armMesh = new THREE.Mesh(armGeo, brassMat);
+	armMesh.rotation.x = Math.PI / 3;
+	armMesh.position.set(0, 0.12, 0.16);
+	fixtureGroup.add(armMesh);
+
+	// 3. Lamp Hood / Shade pointing down at painting
+	const shadeGeo = new THREE.ConeGeometry(0.15, 0.2, 16, 1, true);
+	const shadeMesh = new THREE.Mesh(shadeGeo, brassMat);
+	shadeMesh.rotation.x = Math.PI; // point down
+	shadeMesh.position.set(0, 0.22, 0.32);
+	fixtureGroup.add(shadeMesh);
+
+	// Lamp Bulb inside shade
+	const bulbGeo = new THREE.SphereGeometry(0.06, 12, 12);
+	const bulbMat = new THREE.MeshBasicMaterial({ color: 0xfffaed });
+	const bulbMesh = new THREE.Mesh(bulbGeo, bulbMat);
+	bulbMesh.position.set(0, 0.16, 0.32);
+	fixtureGroup.add(bulbMesh);
+
+	// 4. Actual SpotLight illuminating the painting
+	const spot = new THREE.SpotLight(0xfff5ea, 4.0, 7, Math.PI / 3.5, 0.4, 1);
+	spot.position.set(0, 0.16, 0.32);
+	spot.target.position.set(0, -0.8, 0); // target the center of the painting
+	fixtureGroup.add(spot);
+	fixtureGroup.add(spot.target);
+
+	// 5. Volumetric Glowing Light Beam Cone
+	const beamGeo = new THREE.CylinderGeometry(0.08, 0.85, 1.3, 16, 1, true);
+	const beamMat = new THREE.MeshBasicMaterial({
+		color: 0xfff5ea,
+		transparent: true,
+		opacity: 0.14,
+		side: THREE.DoubleSide,
+		depthWrite: false
+	});
+	const beamMesh = new THREE.Mesh(beamGeo, beamMat);
+	beamMesh.position.set(0, -0.5, 0.18);
+	beamMesh.rotation.x = 0.12;
+	fixtureGroup.add(beamMesh);
+
+	return fixtureGroup;
+}
 
 function createMuseumFrame(texture, title, x, y, z, rotY, width = 2.4, height = 1.8) {
 	const group = new THREE.Group();
 
 	// 1. Outer Frame (Mahogany Wood)
 	const frameThickness = 0.15;
-	const frameDepth = 0.1;
+	const frameDepth = 0.08; // slim frame depth so it sits flush against wall
 	const frameGeo = new THREE.BoxGeometry(width + frameThickness, height + frameThickness, frameDepth);
 	const frameMat = new THREE.MeshStandardMaterial({
 		color: 0x2b1810,
@@ -1400,7 +1469,7 @@ function createMuseumFrame(texture, title, x, y, z, rotY, width = 2.4, height = 
 	group.add(frameMesh);
 
 	// Gold inner trim
-	const trimGeo = new THREE.BoxGeometry(width + 0.04, height + 0.04, frameDepth + 0.02);
+	const trimGeo = new THREE.BoxGeometry(width + 0.04, height + 0.04, frameDepth + 0.015);
 	const trimMat = new THREE.MeshStandardMaterial({
 		color: 0xd4af37,
 		roughness: 0.3,
@@ -1413,11 +1482,11 @@ function createMuseumFrame(texture, title, x, y, z, rotY, width = 2.4, height = 
 	const canvasGeo = new THREE.PlaneGeometry(width, height);
 	const canvasMat = new THREE.MeshStandardMaterial({
 		map: texture,
-		roughness: 0.6,
+		roughness: 0.5,
 		metalness: 0.05
 	});
 	const canvasMesh = new THREE.Mesh(canvasGeo, canvasMat);
-	canvasMesh.position.z = frameDepth / 2 + 0.015;
+	canvasMesh.position.z = frameDepth / 2 + 0.012;
 	group.add(canvasMesh);
 
 	// 3. Title Plaque
@@ -1441,13 +1510,13 @@ function createMuseumFrame(texture, title, x, y, z, rotY, width = 2.4, height = 
 		metalness: 0.3
 	});
 	const plaqueMesh = new THREE.Mesh(plaqueGeo, plaqueMat);
-	plaqueMesh.position.set(0, -(height / 2 + 0.35), frameDepth / 2 + 0.015);
+	plaqueMesh.position.set(0, -(height / 2 + 0.35), frameDepth / 2 + 0.012);
 	group.add(plaqueMesh);
 
-	// 4. Museum Spotlight
-	const spot = new THREE.PointLight(0xfff5ea, 1.8, 6);
-	spot.position.set(0, height / 2 + 0.6, 0.8);
-	group.add(spot);
+	// 4. Museum Spotlight Fixture mounted at top of frame
+	const spotlightFixture = createMuseumSpotlightFixture();
+	spotlightFixture.position.set(0, height / 2 + 0.15, frameDepth / 2);
+	group.add(spotlightFixture);
 
 	group.position.set(x, y, z);
 	group.rotation.y = rotY;
@@ -1467,21 +1536,21 @@ function buildMuseumGallery() {
 	];
 
 	const framePositions = [
-		// Corridor Left Wall (X = -4.15)
-		{ x: -4.15, y: 2.0, z: 2.0, rotY: Math.PI / 2, texIdx: 4, title: museumTitles[0] },
-		{ x: -4.15, y: 2.0, z: 7.0, rotY: Math.PI / 2, texIdx: 5, title: museumTitles[1] },
+		// Corridor Left Wall (flush against X = -4.35)
+		{ x: -4.35, y: 2.1, z: 2.0, rotY: Math.PI / 2, texIdx: 4, title: museumTitles[0] },
+		{ x: -4.35, y: 2.1, z: 7.0, rotY: Math.PI / 2, texIdx: 5, title: museumTitles[1] },
 
-		// Corridor Right Wall (X = 4.15)
-		{ x: 4.15, y: 2.0, z: 2.0, rotY: -Math.PI / 2, texIdx: 6, title: museumTitles[2] },
-		{ x: 4.15, y: 2.0, z: 7.0, rotY: -Math.PI / 2, texIdx: 7, title: museumTitles[3] },
+		// Corridor Right Wall (flush against X = 7.55)
+		{ x: 7.55, y: 2.1, z: -3.0, rotY: -Math.PI / 2, texIdx: 6, title: museumTitles[2] },
+		{ x: 7.55, y: 2.1, z: -8.0, rotY: -Math.PI / 2, texIdx: 7, title: museumTitles[3] },
 
-		// Back Wall (Z = -12.1)
-		{ x: -3.0, y: 2.2, z: -12.1, rotY: 0, texIdx: 8, title: museumTitles[4] },
-		{ x: 3.0, y: 2.2, z: -12.1, rotY: 0, texIdx: 9, title: museumTitles[5] }
+		// Back Wall (flush against Z = -12.35)
+		{ x: -3.0, y: 2.2, z: -12.35, rotY: 0, texIdx: 8, title: museumTitles[4] },
+		{ x: 3.0, y: 2.2, z: -12.35, rotY: 0, texIdx: 9, title: museumTitles[5] }
 	];
 
 	framePositions.forEach(p => {
-		const frame = createMuseumFrame(artTextures[p.texIdx], p.title, p.x, p.y, p.z, p.rotY);
+		const frame = createMuseumFrame(planeArtTextures[p.texIdx], p.title, p.x, p.y, p.z, p.rotY);
 		galleryGroup.add(frame);
 	});
 
@@ -1567,9 +1636,9 @@ function loadCollisionWorld() {
 						metalness: 0.1
 					});
 				}
-				if ( child.name.match(/^art\d?$/) && artIndex < artTextures.length ) {
+				if ( child.name.match(/^art\d?$/) && artIndex < gltfArtTextures.length ) {
 					child.material = new THREE.MeshBasicMaterial({
-						map: artTextures[artIndex],
+						map: gltfArtTextures[artIndex],
 						side: THREE.DoubleSide
 					});
 					artIndex++;
