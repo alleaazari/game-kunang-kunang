@@ -1344,10 +1344,7 @@ function drawNightBlossom(ctx) {
 	drawFlower(160, 290, '#38bdf8', '#feca57');
 	drawFlower(360, 290, '#ec4899', '#d8f53c');
 	ctx.fillStyle = '#fff9c4'; ctx.font = 'bold 20px Outfit, sans-serif'; ctx.textAlign = 'center';
-	ctx.fillText('Bunga Malam Berkelip 🌸', 256, 480);
-}
-
-function drawSweetDreamsCloud(ctx) {
+	ctx.fillText('Bunga Malfunction drawSweetDreamsCloud(ctx) {
 	ctx.fillStyle = '#0b1329'; ctx.fillRect(0, 0, 512, 512);
 	ctx.fillStyle = '#feca57'; ctx.shadowColor = '#feca57'; ctx.shadowBlur = 20;
 	ctx.beginPath(); ctx.arc(256, 230, 110, 0, Math.PI*2); ctx.fill();
@@ -1364,7 +1361,143 @@ function drawSweetDreamsCloud(ctx) {
 	ctx.fillText('Awan Mimpi Indah ☁️', 256, 480);
 }
 
-const artCanvases = Array.from({ length: 10 }, () => createArtCanvas());
+function drawFireflyCastle(ctx) {
+	ctx.fillStyle = '#070f1e'; ctx.fillRect(0, 0, 512, 512);
+	ctx.fillStyle = '#fff9c4'; ctx.shadowColor = '#fff9c4'; ctx.shadowBlur = 25;
+	ctx.beginPath(); ctx.arc(380, 120, 55, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
+	ctx.fillStyle = '#0f2038';
+	ctx.fillRect(150, 240, 160, 160);
+	ctx.fillRect(120, 200, 50, 200); ctx.fillRect(290, 200, 50, 200);
+	ctx.fillStyle = '#1e3a5f';
+	ctx.beginPath(); ctx.moveTo(110, 200); ctx.lineTo(145, 120); ctx.lineTo(180, 200); ctx.fill();
+	ctx.beginPath(); ctx.moveTo(280, 200); ctx.lineTo(315, 120); ctx.lineTo(350, 200); ctx.fill();
+	ctx.beginPath(); ctx.moveTo(200, 240); ctx.lineTo(230, 150); ctx.lineTo(260, 240); ctx.fill();
+	ctx.fillStyle = '#142e18'; ctx.fillRect(0, 390, 512, 122);
+	ctx.fillStyle = '#d8f53c'; ctx.shadowColor = '#d8f53c'; ctx.shadowBlur = 12;
+	for(let i=0; i<25; i++) {
+		ctx.beginPath(); ctx.arc(Math.random()*512, 150+Math.random()*250, 3, 0, Math.PI*2); ctx.fill();
+	}
+	ctx.shadowBlur = 0;
+	ctx.fillStyle = '#fff9c4'; ctx.font = 'bold 20px Outfit, sans-serif'; ctx.textAlign = 'center';
+	ctx.fillText('Istana Kunang-Kunang 🏰', 256, 480);
+}
+
+function drawNightForestPath(ctx) {
+	ctx.fillStyle = '#0a1622'; ctx.fillRect(0, 0, 512, 512);
+	ctx.fillStyle = '#2d241e';
+	ctx.beginPath(); ctx.moveTo(200, 512); ctx.quadraticCurveTo(240, 380, 256, 300); ctx.lineTo(266, 300); ctx.quadraticCurveTo(280, 380, 312, 512); ctx.fill();
+	ctx.fillStyle = '#142a18';
+	ctx.fillRect(40, 180, 40, 240); ctx.fillRect(432, 180, 40, 240);
+	ctx.fillStyle = '#23522a';
+	ctx.beginPath(); ctx.arc(60, 160, 70, 0, Math.PI*2); ctx.fill();
+	ctx.beginPath(); ctx.arc(452, 160, 70, 0, Math.PI*2); ctx.fill();
+	ctx.fillStyle = '#feca57'; ctx.shadowColor = '#feca57'; ctx.shadowBlur = 15;
+	ctx.beginPath(); ctx.arc(170, 390, 6, 0, Math.PI*2); ctx.fill();
+	ctx.beginPath(); ctx.arc(340, 390, 6, 0, Math.PI*2); ctx.fill();
+	ctx.fillStyle = '#d8f53c'; ctx.shadowColor = '#d8f53c'; ctx.shadowBlur = 10;
+	for(let i=0; i<15; i++) {
+		ctx.beginPath(); ctx.arc(150+Math.random()*212, 200+Math.random()*200, 2.5, 0, Math.PI*2); ctx.fill();
+	}
+	ctx.shadowBlur = 0;
+	ctx.fillStyle = '#fff9c4'; ctx.font = 'bold 20px Outfit, sans-serif'; ctx.textAlign = 'center';
+	ctx.fillText('Jalan Setapak Malam 🛤️', 256, 480);
+}
+
+function drawDreamyStar(ctx) {
+	ctx.fillStyle = '#0b1026'; ctx.fillRect(0, 0, 512, 512);
+	ctx.fillStyle = '#feca57'; ctx.shadowColor = '#feca57'; ctx.shadowBlur = 35;
+	ctx.beginPath();
+	for(let i=0; i<5; i++) {
+		let a1 = (i/5)*Math.PI*2 - Math.PI/2;
+		let a2 = a1 + Math.PI/5;
+		let x1 = 256 + Math.cos(a1)*110, y1 = 230 + Math.sin(a1)*110;
+		let x2 = 256 + Math.cos(a2)*45, y2 = 230 + Math.sin(a2)*45;
+		if(i===0) ctx.moveTo(x1, y1); else ctx.lineTo(x1, y1);
+		ctx.lineTo(x2, y2);
+	}
+	ctx.closePath(); ctx.fill(); ctx.shadowBlur = 0;
+	ctx.strokeStyle = '#422006'; ctx.lineWidth = 3;
+	ctx.beginPath(); ctx.arc(240, 225, 8, 0, Math.PI); ctx.stroke();
+	ctx.beginPath(); ctx.arc(272, 225, 8, 0, Math.PI); ctx.stroke();
+	ctx.fillStyle = '#d8f53c'; ctx.shadowColor = '#d8f53c'; ctx.shadowBlur = 10;
+	for(let i=0; i<16; i++) {
+		ctx.beginPath(); ctx.arc(Math.random()*512, Math.random()*400, 2.5, 0, Math.PI*2); ctx.fill();
+	}
+	ctx.shadowBlur = 0;
+	ctx.fillStyle = '#fff9c4'; ctx.font = 'bold 20px Outfit, sans-serif'; ctx.textAlign = 'center';
+	ctx.fillText('Bintang Penjaga Tidur 🌟', 256, 480);
+}
+
+function drawSleepyFox(ctx) {
+	ctx.fillStyle = '#091522'; ctx.fillRect(0, 0, 512, 512);
+	ctx.fillStyle = '#1b3b1e';
+	ctx.beginPath(); ctx.ellipse(256, 380, 240, 70, 0, 0, Math.PI*2); ctx.fill();
+	ctx.fillStyle = '#e67e22';
+	ctx.beginPath(); ctx.arc(256, 310, 45, 0, Math.PI*2); ctx.fill();
+	ctx.fillStyle = '#d35400';
+	ctx.beginPath(); ctx.arc(280, 310, 30, 0, Math.PI*2); ctx.fill();
+	ctx.fillStyle = '#ecf0f1';
+	ctx.beginPath(); ctx.arc(295, 300, 12, 0, Math.PI*2); ctx.fill();
+	ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 2.5;
+	ctx.beginPath(); ctx.arc(242, 305, 5, 0, Math.PI); ctx.stroke();
+	ctx.fillStyle = '#d8f53c'; ctx.shadowColor = '#d8f53c'; ctx.shadowBlur = 12;
+	[[180, 280], [210, 240], [310, 260], [330, 310], [256, 230]].forEach(([x,y]) => {
+		ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
+	});
+	ctx.shadowBlur = 0;
+	ctx.fillStyle = '#fff9c4'; ctx.font = 'bold 20px Outfit, sans-serif'; ctx.textAlign = 'center';
+	ctx.fillText('Rubah Tidur di Rumput 🦊', 256, 480);
+}
+
+function drawNightLilyPad(ctx) {
+	ctx.fillStyle = '#06101e'; ctx.fillRect(0, 0, 512, 512);
+	ctx.fillStyle = '#0f2f4a'; ctx.fillRect(0, 260, 512, 252);
+	ctx.fillStyle = '#27ae60';
+	ctx.beginPath(); ctx.ellipse(256, 360, 90, 40, 0, 0, Math.PI*2); ctx.fill();
+	ctx.beginPath(); ctx.ellipse(140, 390, 60, 25, 0, 0, Math.PI*2); ctx.fill();
+	ctx.beginPath(); ctx.ellipse(370, 380, 60, 25, 0, 0, Math.PI*2); ctx.fill();
+	ctx.fillStyle = '#e84393'; ctx.shadowColor = '#e84393'; ctx.shadowBlur = 20;
+	for(let i=0; i<8; i++) {
+		let a = (i/8)*Math.PI*2;
+		ctx.beginPath(); ctx.ellipse(256+Math.cos(a)*18, 345+Math.sin(a)*12, 14, 22, a, 0, Math.PI*2); ctx.fill();
+	}
+	ctx.fillStyle = '#feca57'; ctx.shadowColor = '#feca57'; ctx.shadowBlur = 25;
+	ctx.beginPath(); ctx.arc(256, 345, 10, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
+	ctx.fillStyle = '#d8f53c'; ctx.shadowColor = '#d8f53c'; ctx.shadowBlur = 10;
+	for(let i=0; i<12; i++) {
+		ctx.beginPath(); ctx.arc(60+i*36, 280+Math.sin(i)*30, 3, 0, Math.PI*2); ctx.fill();
+	}
+	ctx.shadowBlur = 0;
+	ctx.fillStyle = '#fff9c4'; ctx.font = 'bold 20px Outfit, sans-serif'; ctx.textAlign = 'center';
+	ctx.fillText('Teratai Malam Menyala 🪷', 256, 480);
+}
+
+function drawSleepyPanda(ctx) {
+	ctx.fillStyle = '#0a1726'; ctx.fillRect(0, 0, 512, 512);
+	ctx.fillStyle = '#27ae60';
+	ctx.fillRect(80, 0, 24, 420); ctx.fillRect(400, 0, 24, 420);
+	ctx.fillStyle = '#ecf0f1';
+	ctx.beginPath(); ctx.arc(256, 260, 75, 0, Math.PI*2); ctx.fill();
+	ctx.fillStyle = '#2c3e50';
+	ctx.beginPath(); ctx.arc(195, 200, 25, 0, Math.PI*2); ctx.fill();
+	ctx.beginPath(); ctx.arc(317, 200, 25, 0, Math.PI*2); ctx.fill();
+	ctx.beginPath(); ctx.ellipse(225, 255, 18, 25, -0.3, 0, Math.PI*2); ctx.fill();
+	ctx.beginPath(); ctx.ellipse(287, 255, 18, 25, 0.3, 0, Math.PI*2); ctx.fill();
+	ctx.strokeStyle = '#ecf0f1'; ctx.lineWidth = 3;
+	ctx.beginPath(); ctx.arc(225, 258, 6, 0, Math.PI); ctx.stroke();
+	ctx.beginPath(); ctx.arc(287, 258, 6, 0, Math.PI); ctx.stroke();
+	ctx.fillStyle = '#2c3e50';
+	ctx.beginPath(); ctx.ellipse(256, 280, 10, 7, 0, 0, Math.PI*2); ctx.fill();
+	ctx.fillStyle = '#d8f53c'; ctx.shadowColor = '#d8f53c'; ctx.shadowBlur = 12;
+	[[150, 180], [360, 180], [130, 310], [380, 310], [256, 150]].forEach(([x,y]) => {
+		ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
+	});
+	ctx.shadowBlur = 0;
+	ctx.fillStyle = '#fff9c4'; ctx.font = 'bold 20px Outfit, sans-serif'; ctx.textAlign = 'center';
+	ctx.fillText('Panda Tidur Nyenyak 🐼', 256, 480);
+}
+
+const artCanvases = Array.from({ length: 16 }, () => createArtCanvas());
 drawCuteTree(artCanvases[0].ctx);
 drawCuteMushroom(artCanvases[1].ctx);
 drawFireflyFamily(artCanvases[2].ctx);
@@ -1375,6 +1508,12 @@ drawMagicJar(artCanvases[6].ctx);
 drawNightOwl(artCanvases[7].ctx);
 drawNightBlossom(artCanvases[8].ctx);
 drawSweetDreamsCloud(artCanvases[9].ctx);
+drawFireflyCastle(artCanvases[10].ctx);
+drawNightForestPath(artCanvases[11].ctx);
+drawDreamyStar(artCanvases[12].ctx);
+drawSleepyFox(artCanvases[13].ctx);
+drawNightLilyPad(artCanvases[14].ctx);
+drawSleepyPanda(artCanvases[15].ctx);
 
 // Textures for GLTF meshes (which have inverted UVs)
 const gltfArtTextures = artCanvases.slice(0, 4).map(ac => {
@@ -1453,7 +1592,7 @@ function createMuseumSpotlightFixture() {
 	return fixtureGroup;
 }
 
-function createMuseumFrame(texture, title, x, y, z, rotY, width = 2.4, height = 1.8) {
+function createMuseumFrame(texture, title, x, y, z, rotY, width = 2.2, height = 1.65) {
 	const group = new THREE.Group();
 
 	// 1. Outer Frame (Mahogany Wood)
@@ -1527,23 +1666,53 @@ function buildMuseumGallery() {
 	const galleryGroup = new THREE.Group();
 	
 	const museumTitles = [
+		'Pohon Malam & Kunang-Kunang 🌳',
+		'Jamur Menyala di Malam Hari 🍄',
+		'Keluarga Kunang-Kunang ✨',
+		'Selamat Tidur~ 🌙',
 		'Lentera & Kunang-Kunang 🏮',
 		'Danau Refleksi Bulan 🌊',
 		'Toples Serbuk Cahaya 🔮',
 		'Burung Hantu & Sahabat 🦉',
 		'Bunga Malam Berkelip 🌸',
-		'Awan Mimpi Indah ☁️'
+		'Awan Mimpi Indah ☁️',
+		'Istana Kunang-Kunang 🏰',
+		'Jalan Setapak Malam 🛤️',
+		'Bintang Penjaga Tidur 🌟',
+		'Rubah Tidur di Rumput 🦊',
+		'Teratai Malam Menyala 🪷',
+		'Panda Tidur Nyenyak 🐼'
 	];
 
-	// Mounted flush along the exact same green wall plane (X = 19.01) at height Y = 3.6,
-	// aligned in a neat horizontal row alongside the original tree painting shown in screenshot 2.
+	// Populating ALL empty wall sections across the entire level with 21 framed museum paintings
 	const framePositions = [
-		{ x: 19.01, y: 3.6, z: 0.5, rotY: -Math.PI / 2, texIdx: 4, title: museumTitles[0] },
-		{ x: 19.01, y: 3.6, z: 4.0, rotY: -Math.PI / 2, texIdx: 5, title: museumTitles[1] },
-		{ x: 19.01, y: 3.6, z: 7.5, rotY: -Math.PI / 2, texIdx: 6, title: museumTitles[2] },
-		{ x: 19.01, y: 3.6, z: 11.0, rotY: -Math.PI / 2, texIdx: 7, title: museumTitles[3] },
-		{ x: 19.01, y: 3.6, z: -7.5, rotY: -Math.PI / 2, texIdx: 8, title: museumTitles[4] },
-		{ x: 19.01, y: 3.6, z: -11.0, rotY: -Math.PI / 2, texIdx: 9, title: museumTitles[5] }
+		// Section 1: Far Right Main Gallery Wall (X = 19.01, height Y = 3.6)
+		{ x: 19.01, y: 3.6, z: -11.0, rotY: -Math.PI / 2, texIdx: 4, title: museumTitles[4] },
+		{ x: 19.01, y: 3.6, z: -7.5, rotY: -Math.PI / 2, texIdx: 5, title: museumTitles[5] },
+		{ x: 19.01, y: 3.6, z: 0.5, rotY: -Math.PI / 2, texIdx: 6, title: museumTitles[6] },
+		{ x: 19.01, y: 3.6, z: 4.0, rotY: -Math.PI / 2, texIdx: 7, title: museumTitles[7] },
+		{ x: 19.01, y: 3.6, z: 7.5, rotY: -Math.PI / 2, texIdx: 8, title: museumTitles[8] },
+		{ x: 19.01, y: 3.6, z: 11.0, rotY: -Math.PI / 2, texIdx: 9, title: museumTitles[9] },
+
+		// Section 2: Main Starting Corridor Left Wall (X = -4.34, height Y = 1.5)
+		{ x: -4.34, y: 1.5, z: -9.5, rotY: Math.PI / 2, texIdx: 10, title: museumTitles[10] },
+		{ x: -4.34, y: 1.5, z: -5.5, rotY: Math.PI / 2, texIdx: 11, title: museumTitles[11] },
+		{ x: -4.34, y: 1.5, z: -1.5, rotY: Math.PI / 2, texIdx: 12, title: museumTitles[12] },
+		{ x: -4.34, y: 1.5, z: 2.5, rotY: Math.PI / 2, texIdx: 13, title: museumTitles[13] },
+		{ x: -4.34, y: 1.5, z: 6.5, rotY: Math.PI / 2, texIdx: 14, title: museumTitles[14] },
+		{ x: -4.34, y: 1.5, z: 10.5, rotY: Math.PI / 2, texIdx: 15, title: museumTitles[15] },
+
+		// Section 3: Main Starting Corridor Right Wall (X = 7.58, height Y = 1.5)
+		{ x: 7.58, y: 1.5, z: -9.5, rotY: -Math.PI / 2, texIdx: 0, title: museumTitles[0] },
+		{ x: 7.58, y: 1.5, z: -5.5, rotY: -Math.PI / 2, texIdx: 1, title: museumTitles[1] },
+		{ x: 7.58, y: 1.5, z: -1.5, rotY: -Math.PI / 2, texIdx: 2, title: museumTitles[2] },
+
+		// Section 4: Front Boundary Wall (Z = 12.35, height Y = 1.5)
+		{ x: -2.0, y: 1.5, z: 12.35, rotY: Math.PI, texIdx: 3, title: museumTitles[3] },
+		{ x: 2.0, y: 1.5, z: 12.35, rotY: Math.PI, texIdx: 4, title: museumTitles[4] },
+		{ x: 6.0, y: 1.5, z: 12.35, rotY: Math.PI, texIdx: 5, title: museumTitles[5] },
+		{ x: 10.0, y: 1.5, z: 12.35, rotY: Math.PI, texIdx: 6, title: museumTitles[6] },
+		{ x: 14.0, y: 1.5, z: 12.35, rotY: Math.PI, texIdx: 7, title: museumTitles[7] }
 	];
 
 	framePositions.forEach(p => {
