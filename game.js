@@ -1265,6 +1265,13 @@ function loadCollisionWorld() {
 						metalness: 0.1
 					});
 				}
+				if ( child.name === 'Plane' ) {
+					child.material = new THREE.MeshStandardMaterial({
+						map: mossTexture,
+						roughness: 0.9,
+						metalness: 0.1
+					});
+				}
 				if ( child.name.match(/^art\d?$/) && artIndex < artTextures.length ) {
 					child.material = new THREE.MeshBasicMaterial({
 						map: artTextures[artIndex],
@@ -2702,43 +2709,13 @@ function createTamanModelScene() {
 	tamanModelGroup = new THREE.Group();
 	sceneTamanModel.add(tamanModelGroup);
 
-	// 1. Build Checkered Floor
-	const floorCanvas = document.createElement('canvas');
-	floorCanvas.width = 256;
-	floorCanvas.height = 256;
-	const floorCtx = floorCanvas.getContext('2d');
-	
-	// Draw tile pattern
-	floorCtx.fillStyle = '#efeff3'; // very light grey/white tile base
-	floorCtx.fillRect(0, 0, 256, 256);
-	floorCtx.strokeStyle = '#d2d2d8';
-	floorCtx.lineWidth = 4;
-	floorCtx.strokeRect(0, 0, 256, 256);
-	
-	// Draw corners diamonds (intersections)
-	floorCtx.fillStyle = '#1e293b'; // slate dark diamond
-	const sz = 16;
-	const corners = [[0, 0], [256, 0], [0, 256], [256, 256]];
-	corners.forEach(([cx, cy]) => {
-		floorCtx.beginPath();
-		floorCtx.moveTo(cx, cy - sz);
-		floorCtx.lineTo(cx + sz, cy);
-		floorCtx.lineTo(cx, cy + sz);
-		floorCtx.lineTo(cx - sz, cy);
-		floorCtx.closePath();
-		floorCtx.fill();
-	});
-
-	const floorTexture = new THREE.CanvasTexture(floorCanvas);
-	floorTexture.wrapS = THREE.RepeatWrapping;
-	floorTexture.wrapT = THREE.RepeatWrapping;
-	floorTexture.repeat.set(16, 16);
+	// 1. Build Green Grass/Moss Floor
 
 	const floorGeo = new THREE.PlaneGeometry(32, 32);
 	const floorMat = new THREE.MeshStandardMaterial({
-		map: floorTexture,
-		roughness: 0.75,
-		metalness: 0.1
+		map: mossTexture,
+		roughness: 0.85,
+		metalness: 0.05
 	});
 	const floorMesh = new THREE.Mesh(floorGeo, floorMat);
 	floorMesh.rotation.x = -Math.PI / 2;
