@@ -1536,17 +1536,15 @@ function buildMuseumGallery() {
 	];
 
 	const framePositions = [
-		// Corridor Left Wall (flush against X = -4.35, eye level Y = 1.6)
-		{ x: -4.35, y: 1.6, z: 2.0, rotY: Math.PI / 2, texIdx: 4, title: museumTitles[0] },
-		{ x: -4.35, y: 1.6, z: 7.0, rotY: Math.PI / 2, texIdx: 5, title: museumTitles[1] },
+		// Back Wall (flush against real solid wall at Z = -12.33)
+		{ x: -2.0, y: 1.7, z: -12.33, rotY: 0, texIdx: 4, title: museumTitles[0] },
+		{ x: 2.0, y: 1.7, z: -12.33, rotY: 0, texIdx: 5, title: museumTitles[1] },
+		{ x: 13.0, y: 1.7, z: -12.33, rotY: 0, texIdx: 6, title: museumTitles[2] },
 
-		// Corridor Right Wall (flush against X = 4.35, eye level Y = 1.6)
-		{ x: 4.35, y: 1.6, z: 2.0, rotY: -Math.PI / 2, texIdx: 6, title: museumTitles[2] },
-		{ x: 4.35, y: 1.6, z: 7.0, rotY: -Math.PI / 2, texIdx: 7, title: museumTitles[3] },
-
-		// Back Wall (flush against Z = -12.3, eye level Y = 1.6)
-		{ x: -3.0, y: 1.6, z: -12.3, rotY: 0, texIdx: 8, title: museumTitles[4] },
-		{ x: 3.0, y: 1.6, z: -12.3, rotY: 0, texIdx: 9, title: museumTitles[5] }
+		// Far Right Wall (flush against real solid wall at X = 19.01)
+		{ x: 19.01, y: 2.0, z: 1.5, rotY: -Math.PI / 2, texIdx: 7, title: museumTitles[3] },
+		{ x: 19.01, y: 2.0, z: 6.5, rotY: -Math.PI / 2, texIdx: 8, title: museumTitles[4] },
+		{ x: 19.01, y: 2.0, z: -8.5, rotY: -Math.PI / 2, texIdx: 9, title: museumTitles[5] }
 	];
 
 	framePositions.forEach(p => {
