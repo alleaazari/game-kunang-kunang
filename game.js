@@ -1536,21 +1536,21 @@ function buildMuseumGallery() {
 	];
 
 	const framePositions = [
-		// Corridor Left Wall (flush against X = -4.35)
-		{ x: -4.35, y: 2.1, z: 2.0, rotY: Math.PI / 2, texIdx: 4, title: museumTitles[0] },
-		{ x: -4.35, y: 2.1, z: 7.0, rotY: Math.PI / 2, texIdx: 5, title: museumTitles[1] },
+		// Corridor Left Wall (flush against X = -4.35, eye level Y = 1.6)
+		{ x: -4.35, y: 1.6, z: 2.0, rotY: Math.PI / 2, texIdx: 4, title: museumTitles[0] },
+		{ x: -4.35, y: 1.6, z: 7.0, rotY: Math.PI / 2, texIdx: 5, title: museumTitles[1] },
 
-		// Corridor Right Wall (flush against X = 7.55)
-		{ x: 7.55, y: 2.1, z: -3.0, rotY: -Math.PI / 2, texIdx: 6, title: museumTitles[2] },
-		{ x: 7.55, y: 2.1, z: -8.0, rotY: -Math.PI / 2, texIdx: 7, title: museumTitles[3] },
+		// Corridor Right Wall (flush against X = 4.35, eye level Y = 1.6)
+		{ x: 4.35, y: 1.6, z: 2.0, rotY: -Math.PI / 2, texIdx: 6, title: museumTitles[2] },
+		{ x: 4.35, y: 1.6, z: 7.0, rotY: -Math.PI / 2, texIdx: 7, title: museumTitles[3] },
 
-		// Back Wall (flush against Z = -12.35)
-		{ x: -3.0, y: 2.2, z: -12.35, rotY: 0, texIdx: 8, title: museumTitles[4] },
-		{ x: 3.0, y: 2.2, z: -12.35, rotY: 0, texIdx: 9, title: museumTitles[5] }
+		// Back Wall (flush against Z = -12.3, eye level Y = 1.6)
+		{ x: -3.0, y: 1.6, z: -12.3, rotY: 0, texIdx: 8, title: museumTitles[4] },
+		{ x: 3.0, y: 1.6, z: -12.3, rotY: 0, texIdx: 9, title: museumTitles[5] }
 	];
 
 	framePositions.forEach(p => {
-		const frame = createMuseumFrame(planeArtTextures[p.texIdx], p.title, p.x, p.y, p.z, p.rotY);
+		const frame = createMuseumFrame(planeArtTextures[p.texIdx], p.title, p.x, p.y, p.z, p.rotY, 1.8, 1.35);
 		galleryGroup.add(frame);
 	});
 
