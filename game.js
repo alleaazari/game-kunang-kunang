@@ -1535,20 +1535,19 @@ function buildMuseumGallery() {
 		'Awan Mimpi Indah ☁️'
 	];
 
+	// Mounted flush along the exact same green wall plane (X = 19.01) at height Y = 3.6,
+	// aligned in a neat horizontal row alongside the original tree painting shown in screenshot 2.
 	const framePositions = [
-		// Main Hallway Left Wall (flush against empty green wall at X = -4.34, Y = 1.5)
-		{ x: -4.34, y: 1.5, z: 1.5, rotY: Math.PI / 2, texIdx: 4, title: museumTitles[0] },
-		{ x: -4.34, y: 1.5, z: 5.5, rotY: Math.PI / 2, texIdx: 5, title: museumTitles[1] },
-		{ x: -4.34, y: 1.5, z: 9.5, rotY: Math.PI / 2, texIdx: 6, title: museumTitles[2] },
-
-		// Main Hallway Right Wall (flush against empty green wall at X = 7.58, Y = 1.5)
-		{ x: 7.58, y: 1.5, z: 1.5, rotY: -Math.PI / 2, texIdx: 7, title: museumTitles[3] },
-		{ x: 7.58, y: 1.5, z: 5.5, rotY: -Math.PI / 2, texIdx: 8, title: museumTitles[4] },
-		{ x: 7.58, y: 1.5, z: 9.5, rotY: -Math.PI / 2, texIdx: 9, title: museumTitles[5] }
+		{ x: 19.01, y: 3.6, z: 0.5, rotY: -Math.PI / 2, texIdx: 4, title: museumTitles[0] },
+		{ x: 19.01, y: 3.6, z: 4.0, rotY: -Math.PI / 2, texIdx: 5, title: museumTitles[1] },
+		{ x: 19.01, y: 3.6, z: 7.5, rotY: -Math.PI / 2, texIdx: 6, title: museumTitles[2] },
+		{ x: 19.01, y: 3.6, z: 11.0, rotY: -Math.PI / 2, texIdx: 7, title: museumTitles[3] },
+		{ x: 19.01, y: 3.6, z: -7.5, rotY: -Math.PI / 2, texIdx: 8, title: museumTitles[4] },
+		{ x: 19.01, y: 3.6, z: -11.0, rotY: -Math.PI / 2, texIdx: 9, title: museumTitles[5] }
 	];
 
 	framePositions.forEach(p => {
-		const frame = createMuseumFrame(planeArtTextures[p.texIdx], p.title, p.x, p.y, p.z, p.rotY, 1.8, 1.35);
+		const frame = createMuseumFrame(planeArtTextures[p.texIdx], p.title, p.x, p.y, p.z, p.rotY, 2.2, 1.65);
 		galleryGroup.add(frame);
 	});
 
