@@ -407,7 +407,68 @@ treeModelLoader.load( 'assets/pohon.glb', function( gltf ) {
 	scene.add(cityTree);
 	createFloatingLabelForTree(cityTree, "Klik Pohon 🌳");
 	
-	console.log("pohon.glb loaded, successfully spawned 5 portal trees! Height:", originalTreeHeight);
+	// Spawn decorative forest trees (non-clickable) to populate empty spaces (e.g. elevated platform)
+	const decorationTreePositions = [
+		{ x: -11, y: 0.0, z: 13, height: 2.8 },
+		{ x: -7, y: 0.0, z: 9, height: 3.2 },
+		{ x: -10, y: 0.0, z: 6, height: 2.5 },
+		{ x: -14, y: 0.0, z: 8, height: 3.0 },
+		{ x: 5, y: -1.8, z: -8, height: 2.8 },
+		{ x: -5, y: -1.8, z: -8, height: 3.2 },
+		{ x: -12, y: -1.8, z: -4, height: 2.7 },
+		{ x: 8, y: -1.8, z: 8, height: 3.0 }
+	];
+
+	const decorationTreeMaterial = new THREE.MeshStandardMaterial({
+		color: 0x14532d, // dark green forest foliage
+		roughness: 0.85,
+		metalness: 0.05
+	});
+
+	decorationTreePositions.forEach(pos => {
+		const decTree = originalTreeModel.clone();
+		const scaleFactor = pos.height / originalTreeHeight;
+		decTree.scale.set(scaleFactor, scaleFactor, scaleFactor);
+		decTree.position.set(pos.x, pos.y, pos.z);
+		
+		decTree.traverse( child => {
+			if ( child.isMesh ) {
+				child.castShadow = true;
+				child.receiveShadow = true;
+				const matName = child.material.name.toLowerCase();
+				if ( matName.includes('leaf') || matName.includes('green') ) {
+					child.material = decorationTreeMaterial;
+				}
+			}
+		});
+		
+		scene.add(decTree);
+
+		// Add 6 fireflies swarming close around this tree's foliage
+		for (let j = 0; j < 6; j++) {
+			const ffMesh = new THREE.Mesh(fireflyGeometry, fireflyMaterial);
+			const angle = Math.random() * Math.PI * 2;
+			const radius = 0.5 + Math.random() * 2.0;
+			const fx = pos.x + Math.cos(angle) * radius;
+			const fy = pos.y + (pos.height * 0.7) + (Math.random() - 0.5) * 1.5;
+			const fz = pos.z + Math.sin(angle) * radius;
+			
+			ffMesh.position.set(fx, fy, fz);
+			fireflyGroup.add(ffMesh);
+			
+			fireflies.push({
+				mesh: ffMesh,
+				basePosition: ffMesh.position.clone(),
+				speedX: (Math.random() - 0.5) * 0.25,
+				speedY: 0.15 + Math.random() * 0.3,
+				speedZ: (Math.random() - 0.5) * 0.25,
+				phase: Math.random() * Math.PI * 2,
+				amplitude: 0.3 + Math.random() * 0.5
+			});
+		}
+	});
+
+	console.log("pohon.glb loaded, successfully spawned 5 portal trees and 8 decorative trees! Height:", originalTreeHeight);
 	loadCollisionWorld();
 });
 
