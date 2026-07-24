@@ -248,3 +248,193 @@ select {
 	color: #cbd5e1;
 	font-weight: 300;
 }
+
+/* =============================================
+   SHAPE SELECTION SCENE (SCENE 1.5) UI STYLES
+   ============================================= */
+
+/* Shape Description Card - top-left */
+.info-card-shape {
+	position: absolute;
+	top: 20px;
+	left: 20px;
+	width: 300px;
+	background: rgba(10, 14, 28, 0.78);
+	backdrop-filter: blur(14px);
+	-webkit-backdrop-filter: blur(14px);
+	border: 1px solid rgba(244, 162, 97, 0.35);
+	border-radius: 16px;
+	padding: 18px 20px;
+	color: #ffffff;
+	z-index: 150;
+	box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 18px rgba(244, 162, 97, 0.1);
+	transition: opacity 0.4s ease;
+	pointer-events: none;
+}
+
+.shape-desc-name {
+	display: inline-block;
+	background: rgba(244, 162, 97, 0.18);
+	border: 1px solid rgba(244, 162, 97, 0.4);
+	border-radius: 30px;
+	padding: 3px 12px;
+	font-size: 11px;
+	color: #f4a261;
+	font-weight: 600;
+	letter-spacing: 0.5px;
+	margin-bottom: 10px;
+	text-transform: uppercase;
+}
+
+.info-card-shape h3.shape-desc-title {
+	margin: 8px 0 6px;
+	font-size: 15px;
+	color: #f4a261;
+	font-weight: 700;
+	letter-spacing: 0.3px;
+	line-height: 1.4;
+}
+
+.info-card-shape p.shape-desc-body {
+	margin: 0;
+	font-size: 12px;
+	line-height: 1.65;
+	color: #cbd5e1;
+	font-weight: 300;
+}
+
+/* Masuk VR Button - bottom-center */
+#masuk-vr-btn {
+	position: absolute;
+	bottom: 36px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 150;
+	transition: opacity 0.4s ease;
+}
+
+#masuk-vr-btn-inner {
+	background: linear-gradient(135deg, #f4a261 0%, #e76f51 100%);
+	border: none;
+	border-radius: 50px;
+	color: #fff;
+	padding: 14px 44px;
+	font-size: 15px;
+	font-weight: 700;
+	font-family: 'Outfit', sans-serif;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	cursor: pointer;
+	box-shadow: 0 8px 24px rgba(231, 111, 81, 0.45), 0 0 0 0 rgba(244, 162, 97, 0);
+	transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+	outline: none;
+	animation: vrBtnPulse 2.2s ease-in-out infinite;
+}
+
+@keyframes vrBtnPulse {
+	0%, 100% { box-shadow: 0 8px 24px rgba(231, 111, 81, 0.45), 0 0 0 0 rgba(244, 162, 97, 0.4); }
+	50% { box-shadow: 0 12px 28px rgba(231, 111, 81, 0.6), 0 0 0 10px rgba(244, 162, 97, 0); }
+}
+
+#masuk-vr-btn-inner:hover {
+	transform: translateY(-3px) scale(1.04);
+	box-shadow: 0 14px 30px rgba(231, 111, 81, 0.65);
+}
+
+#masuk-vr-btn-inner:active {
+	transform: translateY(1px) scale(0.98);
+}
+
+/* Shape Scene HUD hint text */
+#shape-scene-info {
+	position: absolute;
+	bottom: 100px;
+	left: 50%;
+	transform: translateX(-50%);
+	background: rgba(8, 12, 24, 0.65);
+	backdrop-filter: blur(8px);
+	border: 1px solid rgba(244, 162, 97, 0.2);
+	border-radius: 30px;
+	padding: 8px 22px;
+	color: #e0e6ed;
+	font-size: 13px;
+	font-weight: 300;
+	letter-spacing: 0.3px;
+	z-index: 150;
+	pointer-events: none;
+	text-align: center;
+	transition: opacity 0.4s ease;
+	white-space: nowrap;
+}
+
+#shape-scene-info b {
+	color: #f4a261;
+	font-weight: 600;
+}
+
+/* Shape Scene Kembali Button - top-right */
+#shape-back-btn {
+	position: absolute;
+	top: 20px;
+	right: 20px;
+	z-index: 150;
+	transition: opacity 0.4s ease;
+}
+
+#shape-back-btn-inner {
+	background: rgba(20, 24, 36, 0.75);
+	border: 1px solid rgba(255, 255, 255, 0.15);
+	border-radius: 12px;
+	color: #ffffff;
+	padding: 10px 20px;
+	font-size: 13px;
+	font-weight: 600;
+	font-family: 'Outfit', sans-serif;
+	cursor: pointer;
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+	transition: all 0.25s ease;
+	backdrop-filter: blur(8px);
+}
+
+#shape-back-btn-inner:hover {
+	background: rgba(244, 162, 97, 0.15);
+	border-color: rgba(244, 162, 97, 0.5);
+	color: #f4a261;
+	transform: translateY(-2px);
+}
+
+/* VR Scene Keluar Button - bottom-center */
+#vr-exit-btn {
+	position: absolute;
+	bottom: 36px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 150;
+	transition: opacity 0.4s ease;
+}
+
+#vr-exit-btn-inner {
+	background: linear-gradient(135deg, #e76f51 0%, #d62828 100%);
+	border: none;
+	border-radius: 50px;
+	color: #fff;
+	padding: 14px 44px;
+	font-size: 15px;
+	font-weight: 700;
+	font-family: 'Outfit', sans-serif;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	cursor: pointer;
+	box-shadow: 0 8px 24px rgba(214, 40, 40, 0.45);
+	transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+	outline: none;
+}
+
+#vr-exit-btn-inner:hover {
+	transform: translateY(-3px) scale(1.04);
+	box-shadow: 0 14px 30px rgba(214, 40, 40, 0.65);
+}
+
+#vr-exit-btn-inner:active {
+	transform: translateY(1px) scale(0.98);
+}

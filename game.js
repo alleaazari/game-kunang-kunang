@@ -607,7 +607,7 @@ const vector2 = new THREE.Vector3();
 const vector3 = new THREE.Vector3();
 
 document.addEventListener( 'keydown', ( event ) => {
-	if (isTamanAbadi) return; // Ignore controls in Scene 2
+	if (isTamanAbadi || isVrShapesScene || isTamanModel) return; // Ignore controls in Scene 2/2.5/3
 	keyStates[ event.code ] = true;
 } );
 
@@ -637,7 +637,7 @@ startButton.addEventListener('click', () => {
 });
 
 container.addEventListener( 'mousedown', () => {
-	if (isTamanAbadi) return;
+	if (isTamanAbadi || isTamanModel) return;
 	if (overlay.style.display === 'none') {
 		document.body.requestPointerLock();
 	}
@@ -648,18 +648,37 @@ container.addEventListener( 'mousedown', () => {
 document.addEventListener( 'mouseup', (event) => {
 	if (overlay.style.display !== 'none') return;
 	
-	if (isTamanAbadi) {
+	if (isVrShapesScene) {
 		// Update mousePos just in case mousemove didn't trigger
 		if (event.clientX !== undefined) {
 			mousePos.x = (event.clientX / window.innerWidth) * 2 - 1;
 			mousePos.y = -(event.clientY / window.innerHeight) * 2 + 1;
 		}
-		// Handle Scene 2 Click Raycast
-		raycaster.setFromCamera(mousePos, camera);
-		const intersects = raycaster.intersectObject(returnButtonSprite);
-		if (intersects.length > 0) {
-			returnToSceneAwal();
+		// Handle VR shapes scene click
+		checkVrShapeClick();
+		return;
+	}
+
+	if (isTamanAbadi) {
+		return; // original forest has hover-to-return, no click action
+	}
+
+	if (isTamanModel) {
+		if (event.clientX !== undefined) {
+			mousePos.x = (event.clientX / window.innerWidth) * 2 - 1;
+			mousePos.y = -(event.clientY / window.innerHeight) * 2 + 1;
 		}
+		checkTamanModelClick();
+		return;
+	}
+
+	// Handle shape scene clicks
+	if (isShapeScene) {
+		if (event.clientX !== undefined) {
+			mousePos.x = (event.clientX / window.innerWidth) * 2 - 1;
+			mousePos.y = -(event.clientY / window.innerHeight) * 2 + 1;
+		}
+		checkShapeClick();
 		return;
 	}
 
@@ -680,7 +699,7 @@ document.addEventListener( 'mouseup', (event) => {
 } );
 
 document.body.addEventListener( 'mousemove', ( event ) => {
-	if (isTamanAbadi) return; // Ignore mouse rotation in Scene 2 (OrbitControls active)
+	if (isTamanAbadi || isTamanModel) return; // Ignore mouse rotation when OrbitControls are active
 	if ( document.pointerLockElement === document.body ) {
 		camera.rotation.y -= event.movementX / 500;
 		camera.rotation.x -= event.movementY / 500;
@@ -1291,8 +1310,17 @@ function loadCollisionWorld() {
 		helper.visible = false;
 		scene.add( helper );
 		
+		// Build the new Scene 1.5 "Pilih Bentuk"
+		createShapeSelectionScene();
+
 		// Build the new Scene 2 "Taman Abadi"
 		createTamanAbadiScene();
+
+		// Build the new Scene 2.5 "VR Shapes View"
+		createVrShapesScene();
+		
+		// Build the new Scene 3 "Taman Model & Panorama"
+		createTamanModelScene();
 		
 		// Start loop
 		animate();
@@ -1311,7 +1339,56 @@ function teleportPlayerIfOob() {
 
 
 // ==========================================
-// SCENE 2: TAMAN ABADI (THE ETERNAL GARDEN)
+// SCENE 1.5: PILIH BENTUK (SHAPE SELECTION)
+// ==========================================
+let isShapeScene = false;
+let sceneShapes;
+let controlsShapes;
+let selectedShapeIndex = -1; // -1 = none selected
+const shapeObjects = [];
+const shapeOriginalScales = [];
+const shapeGlowLights = [];
+
+const SHAPE_DATA = [
+	{
+		name: 'Kubus',
+		color: 0xd4a017,
+		emissive: 0x7a5a00,
+		descTitle: '📦 Kubus (Hexahedron)',
+		descBody: 'Kubus memiliki 6 sisi datar berbentuk persegi yang sama besar. Setiap sudutnya membentuk sudut siku-siku 90°. Kubus adalah salah satu bangun ruang paling simetris dengan 11 jaring-jaring yang berbeda.'
+	},
+	{
+		name: 'Bola',
+		color: 0x4daa7f,
+		emissive: 0x1a5a3a,
+		descTitle: '🌐 Bola (Sphere)',
+		descBody: 'Bola adalah bangun ruang yang setiap titik pada permukaannya berjarak sama dari titik pusatnya (jari-jari). Tidak memiliki sudut maupun rusuk, dan merupakan bentuk paling efisien dalam meminimalkan luas permukaan.'
+	},
+	{
+		name: 'Silinder',
+		color: 0xb04040,
+		emissive: 0x5a1a1a,
+		descTitle: '🛢️ Silinder (Cylinder)',
+		descBody: 'Silinder memiliki dua lingkaran sejajar sebagai alas dan tutup, dihubungkan oleh permukaan lengkung. Volume silinder = π × r² × tinggi. Banyak ditemukan dalam kehidupan sehari-hari seperti kaleng dan pipa.'
+	},
+	{
+		name: 'Torus',
+		color: 0x9b7abf,
+		emissive: 0x4a2a7a,
+		descTitle: '🍩 Torus (Donut Shape)',
+		descBody: 'Torus adalah permukaan revolusi yang terbentuk dengan memutar lingkaran di sekeliling sumbu yang terletak pada bidang lingkaran tersebut. Bentuk ini sering dijumpai pada donat dan ban sepeda.'
+	},
+	{
+		name: 'Kerucut',
+		color: 0x2a7fa0,
+		emissive: 0x0a3a5a,
+		descTitle: '🔺 Kerucut (Cone)',
+		descBody: 'Kerucut memiliki satu alas berbentuk lingkaran dan satu titik puncak. Permukaan selimutnya merupakan bidang lengkung. Volume kerucut = ⅓ × π × r² × tinggi. Sering ditemukan pada es krim dan lalu lintas.'
+	}
+];
+
+// ==========================================
+// SCENE 2: TAMAN ABADI (THE ETERNAL GARDEN - ORIGINAL FOREST)
 // ==========================================
 let isTamanAbadi = false;
 let sceneTamanAbadi;
@@ -1326,6 +1403,33 @@ const tamanLamps = [];
 let hoverTimer = 0;
 const hoverThreshold = 1.0;
 
+// ==========================================
+// SCENE 2.5: VR SHAPES VIEW (BLACK BACKGROUND)
+// ==========================================
+let isVrShapesScene = false;
+let sceneVrShapes;
+let controlsVrShapes;
+let selectedVrShapeIndex = -1; // -1 = none selected
+const vrShapeObjects = [];
+const vrShapeOriginalScales = [];
+const vrShapeGlowLights = [];
+
+// ==========================================
+// SCENE 3: TAMAN MODEL & PANORAMA (3RD TREE SCENE)
+// ==========================================
+let isTamanModel = false;
+let sceneTamanModel;
+let controlsTamanModel;
+let isTamanModelPanorama = false; // true = showing 360 panorama, false = showing room and shapes
+let tamanModelGroup; // contains the green room, stairs, and screen
+let panoramaSphere; // large sphere for the 360 panorama
+const tamanModelShapes = []; // floating sphere, cylinder, cone
+const tamanModelShapeOriginalScales = [];
+const tamanModelButtons = []; // Panorama and Model buttons
+let tamanModelBackToMazeSprite; // return button to starting maze
+let tamanModelTvTexture; // dynamic screen texture
+let tamanModelTextCanvas, tamanModelTextTexture; // canvas for floating text labels
+
 // Raycast & Interaction
 const raycaster = new THREE.Raycaster();
 const mousePos = new THREE.Vector2(-9999, -9999);
@@ -1333,7 +1437,115 @@ const mousePos = new THREE.Vector2(-9999, -9999);
 window.addEventListener('mousemove', (event) => {
 	mousePos.x = (event.clientX / window.innerWidth) * 2 - 1;
 	mousePos.y = -(event.clientY / window.innerHeight) * 2 + 1;
+	if (isTamanModel) {
+		updateTamanModelHover();
+	}
 });
+
+// ==========================================
+// SCENE 1.5: PILIH BENTUK SETUP
+// ==========================================
+function createShapeSelectionScene() {
+	sceneShapes = new THREE.Scene();
+	sceneShapes.background = new THREE.Color(0x1a1d24); // Solid charcoal matching screenshot 2 & 4
+	sceneShapes.fog = new THREE.FogExp2(0x1a1d24, 0.025);
+
+	// Light setup
+	const ambLight = new THREE.AmbientLight(0x333344, 0.7);
+	sceneShapes.add(ambLight);
+	const dirLight = new THREE.DirectionalLight(0xffffff, 0.95);
+	dirLight.position.set(5, 10, 5);
+	dirLight.castShadow = true;
+	sceneShapes.add(dirLight);
+	const fillLight = new THREE.DirectionalLight(0x4466ff, 0.45);
+	fillLight.position.set(-5, 3, -5);
+	sceneShapes.add(fillLight);
+
+	// Platform matching screenshot
+	const platformGeo = new THREE.PlaneGeometry(40, 40);
+	const platformMat = new THREE.MeshStandardMaterial({ color: 0x111317, roughness: 0.9, metalness: 0.1 });
+	const platform = new THREE.Mesh(platformGeo, platformMat);
+	platform.rotation.x = -Math.PI / 2;
+	platform.position.y = -1.2;
+	platform.receiveShadow = true;
+	sceneShapes.add(platform);
+
+	// Place 5 shapes horizontally in a straight line
+	const spacing = 1.35;
+	shapeObjects.length = 0;
+	shapeOriginalScales.length = 0;
+	shapeGlowLights.length = 0;
+
+	SHAPE_DATA.forEach((sd, i) => {
+		const x = (i - 2) * spacing;
+		const z = 0;
+
+		let geo;
+		if (sd.name === 'Kubus') {
+			geo = new THREE.BoxGeometry(0.7, 0.7, 0.7);
+		} else if (sd.name === 'Bola') {
+			geo = new THREE.SphereGeometry(0.38, 32, 32);
+		} else if (sd.name === 'Silinder') {
+			geo = new THREE.CylinderGeometry(0.28, 0.28, 0.65, 32);
+		} else if (sd.name === 'Torus') {
+			geo = new THREE.TorusGeometry(0.3, 0.12, 16, 48);
+		} else {
+			geo = new THREE.ConeGeometry(0.35, 0.7, 32);
+		}
+
+		const mat = new THREE.MeshStandardMaterial({
+			color: sd.color,
+			emissive: sd.emissive,
+			emissiveIntensity: 0.2,
+			roughness: 0.35,
+			metalness: 0.15
+		});
+		const mesh = new THREE.Mesh(geo, mat);
+		mesh.position.set(x, 0, z);
+		mesh.castShadow = true;
+		mesh.receiveShadow = true;
+		mesh.userData.shapeIndex = i;
+
+		// Initial rotations to make them look nice and match screenshot
+		if (sd.name === 'Kubus') {
+			mesh.rotation.set(0.3, 0.4, 0.1);
+		} else if (sd.name === 'Silinder') {
+			mesh.rotation.set(0.1, 0, 0.15);
+		} else if (sd.name === 'Torus') {
+			mesh.rotation.set(0.3, 0.6, 0.8);
+		} else if (sd.name === 'Kerucut') {
+			mesh.rotation.set(0.2, 0, -0.2);
+		}
+
+		sceneShapes.add(mesh);
+		shapeObjects.push(mesh);
+		shapeOriginalScales.push(mesh.scale.clone());
+
+		// Shadow circle matching screenshot
+		const shadowGeo = new THREE.CircleGeometry(0.35, 24);
+		const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.45, depthWrite: false });
+		const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
+		shadowMesh.rotation.x = -Math.PI / 2;
+		shadowMesh.position.set(x, -1.18, z);
+		sceneShapes.add(shadowMesh);
+
+		// Per-shape light
+		const gl = new THREE.PointLight(sd.color, 0, 4);
+		gl.position.set(x, 1.2, z);
+		sceneShapes.add(gl);
+		shapeGlowLights.push(gl);
+	});
+
+	// OrbitControls for shape scene
+	controlsShapes = new OrbitControls(camera, renderer.domElement);
+	controlsShapes.enabled = false;
+	controlsShapes.enableDamping = true;
+	controlsShapes.dampingFactor = 0.06;
+	controlsShapes.enablePan = false;
+	controlsShapes.maxPolarAngle = Math.PI / 2.2;
+	controlsShapes.minDistance = 3;
+	controlsShapes.maxDistance = 10;
+}
 
 function createTamanAbadiScene() {
 	sceneTamanAbadi = new THREE.Scene();
@@ -1489,6 +1701,129 @@ function createTamanLampPost(position, index) {
 	sceneTamanAbadi.add(lampGroup);
 }
 
+function createVrShapesScene() {
+	sceneVrShapes = new THREE.Scene();
+	sceneVrShapes.background = new THREE.Color(0x050508);
+	sceneVrShapes.fog = new THREE.FogExp2(0x050508, 0.035);
+
+	const ambLight = new THREE.AmbientLight(0x222233, 0.5);
+	sceneVrShapes.add(ambLight);
+	const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
+	dirLight.position.set(2, 6, 4);
+	sceneVrShapes.add(dirLight);
+
+	const floorGeo = new THREE.PlaneGeometry(35, 35);
+	const floorMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0f, roughness: 0.85, metalness: 0.1 });
+	const floor = new THREE.Mesh(floorGeo, floorMat);
+	floor.rotation.x = -Math.PI / 2;
+	floor.position.y = -1.2;
+	floor.receiveShadow = true;
+	sceneVrShapes.add(floor);
+
+	const spacing = 1.35;
+	vrShapeObjects.length = 0;
+	vrShapeOriginalScales.length = 0;
+	vrShapeGlowLights.length = 0;
+
+	SHAPE_DATA.forEach((sd, i) => {
+		const x = (i - 2) * spacing;
+		const z = 0;
+
+		let geo;
+		if (sd.name === 'Kubus') {
+			geo = new THREE.BoxGeometry(0.7, 0.7, 0.7);
+		} else if (sd.name === 'Bola') {
+			geo = new THREE.SphereGeometry(0.38, 32, 32);
+		} else if (sd.name === 'Silinder') {
+			geo = new THREE.CylinderGeometry(0.28, 0.28, 0.65, 32);
+		} else if (sd.name === 'Torus') {
+			geo = new THREE.TorusGeometry(0.3, 0.12, 16, 48);
+		} else {
+			geo = new THREE.ConeGeometry(0.35, 0.7, 32);
+		}
+
+		const mat = new THREE.MeshStandardMaterial({
+			color: sd.color,
+			emissive: sd.emissive,
+			emissiveIntensity: 0.2,
+			roughness: 0.35,
+			metalness: 0.15
+		});
+		const mesh = new THREE.Mesh(geo, mat);
+		mesh.position.set(x, 0, z);
+		mesh.castShadow = true;
+		mesh.receiveShadow = true;
+		mesh.userData.shapeIndex = i;
+
+		if (sd.name === 'Kubus') {
+			mesh.rotation.set(0.3, 0.4, 0.1);
+		} else if (sd.name === 'Silinder') {
+			mesh.rotation.set(0.1, 0, 0.15);
+		} else if (sd.name === 'Torus') {
+			mesh.rotation.set(0.3, 0.6, 0.8);
+		} else if (sd.name === 'Kerucut') {
+			mesh.rotation.set(0.2, 0, -0.2);
+		}
+
+		sceneVrShapes.add(mesh);
+		vrShapeObjects.push(mesh);
+		vrShapeOriginalScales.push(mesh.scale.clone());
+
+		const shadowGeo = new THREE.CircleGeometry(0.35, 24);
+		const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.45, depthWrite: false });
+		const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
+		shadowMesh.rotation.x = -Math.PI / 2;
+		shadowMesh.position.set(x, -1.18, z);
+		sceneVrShapes.add(shadowMesh);
+
+		const gl = new THREE.PointLight(sd.color, 0, 4);
+		gl.position.set(x, 1.2, z);
+		sceneVrShapes.add(gl);
+		vrShapeGlowLights.push(gl);
+	});
+
+	controlsVrShapes = new OrbitControls(camera, renderer.domElement);
+	controlsVrShapes.enabled = false;
+	controlsVrShapes.enableDamping = true;
+	controlsVrShapes.dampingFactor = 0.05;
+	controlsVrShapes.maxPolarAngle = Math.PI / 2.1;
+	controlsVrShapes.minDistance = 2;
+	controlsVrShapes.maxDistance = 10;
+}
+
+function checkVrShapeClick() {
+	if (!isVrShapesScene) return;
+	raycaster.setFromCamera(mousePos, camera);
+	const intersects = raycaster.intersectObjects(vrShapeObjects, false);
+	if (intersects.length > 0) {
+		const idx = intersects[0].object.userData.shapeIndex;
+		selectVrShape(idx);
+	}
+}
+
+function selectVrShape(idx) {
+	selectedVrShapeIndex = idx;
+	vrShapeObjects.forEach((obj, i) => {
+		if (i === idx) {
+			obj.material.emissiveIntensity = 0.95;
+			vrShapeGlowLights[i].intensity = 4.0;
+		} else {
+			obj.material.emissiveIntensity = 0.15;
+			vrShapeGlowLights[i].intensity = 0;
+		}
+	});
+
+	const sd = SHAPE_DATA[idx];
+	const descCard = document.getElementById('shape-desc-card');
+	if (descCard) {
+		descCard.querySelector('.shape-desc-title').textContent = sd.descTitle;
+		descCard.querySelector('.shape-desc-body').textContent = sd.descBody;
+		descCard.querySelector('.shape-desc-name').textContent = 'Objek Terpilih: ' + sd.name;
+		descCard.style.display = 'block';
+		setTimeout(() => descCard.style.opacity = '1', 20);
+	}
+}
+
 function createTamanFireflies() {
 	const canvas = document.createElement('canvas');
 	canvas.width = 32; canvas.height = 32;
@@ -1609,7 +1944,7 @@ function drawReturnCircle(hovered, time) {
 
 // Raycasting Tree check
 function checkTreeClick(event) {
-	if (isTamanAbadi) return false;
+	if (isTamanAbadi || isShapeScene || isVrShapesScene || isTamanModel) return false;
 
 	if (document.pointerLockElement === document.body) {
 		raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
@@ -1624,18 +1959,97 @@ function checkTreeClick(event) {
 	if (deathTree) targetTrees.push(deathTree);
 	if (cityTree) targetTrees.push(cityTree);
 
-	// Also include the floating label sprites in the raycast target list
-	floatingLabels.forEach(item => {
-		if (item.sprite) targetTrees.push(item.sprite);
-	});
+	// Map sprites to their respective trees
+	const labelToTree = new Map();
+	if (movieTree && floatingLabels[0]) labelToTree.set(floatingLabels[0].sprite, movieTree);
+	if (himTree && floatingLabels[1]) labelToTree.set(floatingLabels[1].sprite, himTree);
+	if (devilTree && floatingLabels[2]) labelToTree.set(floatingLabels[2].sprite, devilTree);
+	if (deathTree && floatingLabels[3]) labelToTree.set(floatingLabels[3].sprite, deathTree);
+	if (cityTree && floatingLabels[4]) labelToTree.set(floatingLabels[4].sprite, cityTree);
 
-	const intersects = raycaster.intersectObjects(targetTrees, true);
+	const raycastTargets = [...targetTrees, ...labelToTree.keys()].filter(Boolean);
+	const intersects = raycaster.intersectObjects(raycastTargets, true);
 
 	if (intersects.length > 0) {
-		enterTamanAbadi();
-		return true;
+		// Find which main tree was hit
+		let hitObj = intersects[0].object;
+		
+		// Traverse up to find if it belongs to any tree or label
+		let targetTree = null;
+		let current = hitObj;
+		while (current) {
+			if (current === movieTree) { targetTree = movieTree; break; }
+			if (current === himTree) { targetTree = himTree; break; }
+			if (current === devilTree) { targetTree = devilTree; break; }
+			if (current === deathTree) { targetTree = deathTree; break; }
+			if (current === cityTree) { targetTree = cityTree; break; }
+			
+			if (labelToTree.has(current)) {
+				targetTree = labelToTree.get(current);
+				break;
+			}
+			current = current.parent;
+		}
+
+		if (targetTree === movieTree) {
+			enterShapeScene();
+			return true;
+		} else if (targetTree === devilTree) {
+			enterTamanModel();
+			return true;
+		} else if (targetTree) {
+			enterTamanAbadi();
+			return true;
+		}
 	}
 	return false;
+}
+
+// Check click on shape in shape scene
+function checkShapeClick() {
+	if (!isShapeScene) return;
+	raycaster.setFromCamera(mousePos, camera);
+	const intersects = raycaster.intersectObjects(shapeObjects, false);
+	if (intersects.length > 0) {
+		const idx = intersects[0].object.userData.shapeIndex;
+		selectShape(idx);
+	}
+}
+
+function selectShape(idx) {
+	selectedShapeIndex = idx;
+	// Reset all shapes
+	shapeObjects.forEach((obj, i) => {
+		const base = shapeOriginalScales[i];
+		if (i === idx) {
+			// Highlight selected
+			obj.scale.set(base.x * 1.35, base.y * 1.35, base.z * 1.35);
+			obj.material.emissiveIntensity = 0.85;
+			shapeGlowLights[i].intensity = 3.5;
+		} else {
+			obj.scale.copy(base);
+			obj.material.emissiveIntensity = 0.15;
+			shapeGlowLights[i].intensity = 0;
+		}
+	});
+
+	// Show description card
+	const sd = SHAPE_DATA[idx];
+	const descCard = document.getElementById('shape-desc-card');
+	if (descCard) {
+		descCard.querySelector('.shape-desc-title').textContent = sd.descTitle;
+		descCard.querySelector('.shape-desc-body').textContent = sd.descBody;
+		descCard.querySelector('.shape-desc-name').textContent = 'Objek Terpilih: ' + sd.name;
+		descCard.style.display = 'block';
+		setTimeout(() => descCard.style.opacity = '1', 20);
+	}
+
+	// Show Masuk VR button
+	const vrBtn = document.getElementById('masuk-vr-btn');
+	if (vrBtn) {
+		vrBtn.style.display = 'block';
+		setTimeout(() => vrBtn.style.opacity = '1', 20);
+	}
 }
 
 // State saving variables
@@ -1643,6 +2057,64 @@ const savedPlayerStart = new THREE.Vector3();
 const savedPlayerEnd = new THREE.Vector3();
 const savedPlayerVelocity = new THREE.Vector3();
 const savedCameraRotation = new THREE.Euler();
+
+function enterShapeScene() {
+	if (isShapeScene || isTamanAbadi) return;
+
+	// Save original state
+	savedPlayerStart.copy(playerCollider.start);
+	savedPlayerEnd.copy(playerCollider.end);
+	savedPlayerVelocity.copy(playerVelocity);
+	savedCameraRotation.copy(camera.rotation);
+
+	const transition = document.getElementById('transition-overlay');
+	if (transition) transition.classList.add('active');
+
+	setTimeout(() => {
+		isShapeScene = true;
+		selectedShapeIndex = -1;
+
+		// Reset all shapes
+		shapeObjects.forEach((obj, i) => {
+			obj.scale.copy(shapeOriginalScales[i]);
+			obj.material.emissiveIntensity = 0.2;
+			shapeGlowLights[i].intensity = 0;
+		});
+
+		const sceneBadge = document.getElementById('scene-badge');
+		if (sceneBadge) {
+			sceneBadge.textContent = "Pilih Bentuk";
+			sceneBadge.style.color = "#f4a261";
+			sceneBadge.style.borderColor = "rgba(244, 162, 97, 0.4)";
+		}
+
+		// Camera position for shape scene
+		camera.position.set(0, 1.5, 6);
+		camera.rotation.set(-0.1, 0, 0);
+
+		if (controlsShapes) {
+			controlsShapes.target.set(0, 0, 0);
+			controlsShapes.update();
+			controlsShapes.enabled = true;
+		}
+
+		document.exitPointerLock();
+
+		// Hide desc and VR button initially
+		const descCard = document.getElementById('shape-desc-card');
+		if (descCard) { descCard.style.opacity = '0'; descCard.style.display = 'none'; }
+		const vrBtn = document.getElementById('masuk-vr-btn');
+		if (vrBtn) { vrBtn.style.opacity = '0'; vrBtn.style.display = 'none'; }
+
+		// Show info HUD
+		const shapeInfo = document.getElementById('shape-scene-info');
+		if (shapeInfo) { shapeInfo.style.display = 'block'; setTimeout(() => shapeInfo.style.opacity = '1', 20); }
+
+		setTimeout(() => {
+			if (transition) transition.classList.remove('active');
+		}, 300);
+	}, 800);
+}
 
 function enterTamanAbadi() {
 	if (isTamanAbadi) return;
@@ -1667,7 +2139,7 @@ function enterTamanAbadi() {
 			sceneBadge.style.borderColor = "rgba(216, 245, 60, 0.4)";
 		}
 
-		// Position camera in Scene 2
+		// Position camera in Scene 2 (Forest)
 		camera.position.set(0, 2.8, 8);
 		camera.rotation.set(0, 0, 0);
 
@@ -1679,7 +2151,7 @@ function enterTamanAbadi() {
 
 		document.exitPointerLock();
 
-		// Show description card for Taman Abadi
+		// Show original description card for Taman Abadi
 		const descCard = document.getElementById('taman-desc-card');
 		if (descCard) {
 			descCard.style.display = 'block';
@@ -1738,12 +2210,192 @@ function returnToSceneAwal() {
 	}, 800);
 }
 
+function enterVrShapesScene() {
+	if (isVrShapesScene) return;
+
+	// Hide shape scene UI
+	const shapeInfo = document.getElementById('shape-scene-info');
+	if (shapeInfo) { shapeInfo.style.opacity = '0'; setTimeout(() => shapeInfo.style.display = 'none', 400); }
+	const descCard = document.getElementById('shape-desc-card');
+	if (descCard) { descCard.style.opacity = '0'; setTimeout(() => descCard.style.display = 'none', 400); }
+	const vrBtn = document.getElementById('masuk-vr-btn');
+	if (vrBtn) { vrBtn.style.opacity = '0'; setTimeout(() => vrBtn.style.display = 'none', 400); }
+	const shapeBackBtn = document.getElementById('shape-back-btn');
+	if (shapeBackBtn) { shapeBackBtn.style.opacity = '0'; setTimeout(() => shapeBackBtn.style.display = 'none', 400); }
+
+	// Disable shape controls
+	if (controlsShapes) controlsShapes.enabled = false;
+	isShapeScene = false;
+
+	// Trigger black transition
+	const transition = document.getElementById('transition-overlay');
+	if (transition) transition.classList.add('active');
+
+	setTimeout(() => {
+		isVrShapesScene = true;
+		
+		const sceneBadge = document.getElementById('scene-badge');
+		if (sceneBadge) {
+			sceneBadge.textContent = "Taman Abadi (VR)";
+			sceneBadge.style.color = "#d8f53c";
+			sceneBadge.style.borderColor = "rgba(216, 245, 60, 0.4)";
+		}
+
+		// Position camera in Scene 2.5 (VR shapes view)
+		camera.position.set(0, 0.8, 3.8);
+		camera.rotation.set(-0.15, 0, 0);
+
+		if (controlsVrShapes) {
+			controlsVrShapes.target.set(0, 0, 0);
+			controlsVrShapes.update();
+			controlsVrShapes.enabled = true;
+		}
+
+		document.exitPointerLock();
+
+		// Synchronize selected shape from shape selection menu
+		if (selectedShapeIndex >= 0) {
+			selectVrShape(selectedShapeIndex);
+		} else {
+			selectVrShape(0); // select first shape by default
+		}
+
+		// Show VR exit button
+		const vrExitBtn = document.getElementById('vr-exit-btn');
+		if (vrExitBtn) { vrExitBtn.style.display = 'block'; setTimeout(() => vrExitBtn.style.opacity = '1', 20); }
+
+		setTimeout(() => {
+			if (transition) transition.classList.remove('active');
+		}, 300);
+	}, 800);
+}
+
+function exitVrToShapeScene() {
+	if (!isVrShapesScene) return;
+
+	const transition = document.getElementById('transition-overlay');
+	if (transition) transition.classList.add('active');
+
+	setTimeout(() => {
+		isVrShapesScene = false;
+		isShapeScene = true;
+
+		// Sync selected index back
+		selectedShapeIndex = selectedVrShapeIndex;
+
+		const sceneBadge = document.getElementById('scene-badge');
+		if (sceneBadge) {
+			sceneBadge.textContent = "Pilih Bentuk";
+			sceneBadge.style.color = "#f4a261";
+			sceneBadge.style.borderColor = "rgba(244, 162, 97, 0.4)";
+		}
+
+		// Disable VR controls, enable shape controls
+		if (controlsVrShapes) controlsVrShapes.enabled = false;
+		if (controlsShapes) {
+			controlsShapes.target.set(0, 0, 0);
+			controlsShapes.update();
+			controlsShapes.enabled = true;
+		}
+
+		// Reset camera
+		camera.position.set(0, 1.5, 6);
+		camera.rotation.set(-0.1, 0, 0);
+
+		// Hide VR UI
+		const vrExitBtn = document.getElementById('vr-exit-btn');
+		if (vrExitBtn) { vrExitBtn.style.opacity = '0'; setTimeout(() => vrExitBtn.style.display = 'none', 400); }
+
+		// Show menu buttons
+		const shapeBackBtn = document.getElementById('shape-back-btn');
+		if (shapeBackBtn) { shapeBackBtn.style.display = 'block'; setTimeout(() => shapeBackBtn.style.opacity = '1', 20); }
+
+		// Show info HUD
+		const shapeInfo = document.getElementById('shape-scene-info');
+		if (shapeInfo) { shapeInfo.style.display = 'block'; setTimeout(() => shapeInfo.style.opacity = '1', 20); }
+
+		// Sync selection highlighting in menu
+		if (selectedShapeIndex >= 0) {
+			selectShape(selectedShapeIndex);
+		}
+
+		setTimeout(() => {
+			if (transition) transition.classList.remove('active');
+		}, 300);
+	}, 800);
+}
+
+function exitShapeSceneToMaze() {
+	if (!isShapeScene) return;
+
+	const transition = document.getElementById('transition-overlay');
+	if (transition) transition.classList.add('active');
+
+	setTimeout(() => {
+		isShapeScene = false;
+
+		const sceneBadge = document.getElementById('scene-badge');
+		if (sceneBadge) {
+			sceneBadge.textContent = "Taman Labirin Awal";
+			sceneBadge.style.color = "#00f3ff";
+			sceneBadge.style.borderColor = "rgba(6, 182, 212, 0.4)";
+		}
+
+		if (controlsShapes) {
+			controlsShapes.enabled = false;
+		}
+
+		// Restore original state
+		playerCollider.start.copy(savedPlayerStart);
+		playerCollider.end.copy(savedPlayerEnd);
+		playerVelocity.copy(savedPlayerVelocity);
+		camera.rotation.copy(savedCameraRotation);
+		camera.position.copy(playerCollider.end);
+
+		document.body.requestPointerLock();
+
+		// Hide all shape menu UI
+		const shapeInfo = document.getElementById('shape-scene-info');
+		if (shapeInfo) { shapeInfo.style.opacity = '0'; setTimeout(() => shapeInfo.style.display = 'none', 400); }
+		const descCard = document.getElementById('shape-desc-card');
+		if (descCard) { descCard.style.opacity = '0'; setTimeout(() => descCard.style.display = 'none', 400); }
+		const vrBtn = document.getElementById('masuk-vr-btn');
+		if (vrBtn) { vrBtn.style.opacity = '0'; setTimeout(() => vrBtn.style.display = 'none', 400); }
+		const shapeBackBtn = document.getElementById('shape-back-btn');
+		if (shapeBackBtn) { shapeBackBtn.style.opacity = '0'; setTimeout(() => shapeBackBtn.style.display = 'none', 400); }
+
+		setTimeout(() => {
+			if (transition) transition.classList.remove('active');
+		}, 300);
+	}, 800);
+}
+
 function animate() {
 	const frameDelta = clock.getDelta();
 	const totalTime = clock.getElapsedTime();
 
-	if (isTamanAbadi) {
-		// --- RENDER SCENE 2 ---
+	if (isTamanModel) {
+		// --- RENDER SCENE 3: TAMAN MODEL & PANORAMA ---
+		if (controlsTamanModel) controlsTamanModel.update();
+
+		// Billboard all circular buttons and back button to face the camera
+		tamanModelButtons.forEach(btn => {
+			btn.lookAt(camera.position);
+		});
+		if (tamanModelBackToMazeSprite) {
+			tamanModelBackToMazeSprite.lookAt(camera.position);
+		}
+
+		// Bob and rotate the floating shapes
+		tamanModelShapes.forEach((shape, i) => {
+			shape.rotation.y += frameDelta * 0.45;
+			shape.rotation.x += frameDelta * 0.15;
+			shape.position.y = 0.6 + Math.sin(totalTime * 1.5 + i * 2.0) * 0.08;
+		});
+
+		renderer.render(sceneTamanModel, camera);
+	} else if (isTamanAbadi) {
+		// --- RENDER SCENE 2: ORIGINAL FOREST SCENE ---
 		if (controlsTaman) controlsTaman.update();
 
 		// Pulse lanterns bulb glows
@@ -1754,7 +2406,7 @@ function animate() {
 		});
 
 		// Billboard return button facing camera
-		returnButtonSprite.lookAt(camera.position);
+		if (returnButtonSprite) returnButtonSprite.lookAt(camera.position);
 
 		// Raycast hover check
 		raycaster.setFromCamera(mousePos, camera);
@@ -1803,6 +2455,62 @@ function animate() {
 		posAttr.needsUpdate = true;
 
 		renderer.render(sceneTamanAbadi, camera);
+	} else if (isVrShapesScene) {
+		// --- RENDER SCENE 2.5: VR SHAPES VIEW ---
+		if (controlsVrShapes) controlsVrShapes.update();
+
+		// Gently float/rotate all VR shapes, making the selected one stand out
+		vrShapeObjects.forEach((obj, i) => {
+			const isSelected = (i === selectedVrShapeIndex);
+			const targetScale = isSelected ? 1.5 : 1.0;
+			const targetZ = isSelected ? 0.45 : 0.0;
+			const targetEmissive = isSelected ? 0.95 : 0.2;
+			const scaleBase = vrShapeOriginalScales[i];
+
+			obj.scale.lerp(new THREE.Vector3(scaleBase.x * targetScale, scaleBase.y * targetScale, scaleBase.z * targetScale), 0.1);
+			obj.position.z = THREE.MathUtils.lerp(obj.position.z, targetZ, 0.1);
+			obj.material.emissiveIntensity = THREE.MathUtils.lerp(obj.material.emissiveIntensity, targetEmissive, 0.1);
+
+			if (!isSelected) {
+				obj.rotation.y += frameDelta * 0.4;
+				obj.position.y = Math.sin(totalTime * 1.0 + i * 1.3) * 0.04;
+				vrShapeGlowLights[i].intensity = 0;
+			} else {
+				obj.rotation.y += frameDelta * 1.4;
+				obj.position.y = 0.12 + Math.sin(totalTime * 2.8) * 0.08;
+				vrShapeGlowLights[i].intensity = 3.5 + Math.sin(totalTime * 4.0) * 0.8;
+			}
+		});
+
+		renderer.render(sceneVrShapes, camera);
+	} else if (isShapeScene) {
+		// --- RENDER SCENE 1.5: SHAPE SELECTION ---
+		if (controlsShapes) controlsShapes.update();
+
+		// Gently float/rotate all shapes, making the selected one stand out
+		shapeObjects.forEach((obj, i) => {
+			const isSelected = (i === selectedShapeIndex);
+			const targetScale = isSelected ? 1.4 : 1.0;
+			const targetZ = isSelected ? 0.4 : 0.0;
+			const targetEmissive = isSelected ? 0.85 : 0.2;
+			const scaleBase = shapeOriginalScales[i];
+
+			obj.scale.lerp(new THREE.Vector3(scaleBase.x * targetScale, scaleBase.y * targetScale, scaleBase.z * targetScale), 0.1);
+			obj.position.z = THREE.MathUtils.lerp(obj.position.z, targetZ, 0.1);
+			obj.material.emissiveIntensity = THREE.MathUtils.lerp(obj.material.emissiveIntensity, targetEmissive, 0.1);
+
+			if (!isSelected) {
+				obj.rotation.y += frameDelta * 0.4;
+				obj.position.y = Math.sin(totalTime * 1.2 + i * 1.1) * 0.05;
+				shapeGlowLights[i].intensity = 0;
+			} else {
+				obj.rotation.y += frameDelta * 1.2;
+				obj.position.y = 0.1 + Math.sin(totalTime * 2.5) * 0.07;
+				shapeGlowLights[i].intensity = 3.0 + Math.sin(totalTime * 3.0) * 0.5;
+			}
+		});
+
+		renderer.render(sceneShapes, camera);
 	} else {
 		// --- RENDER SCENE 1 (ORIGINAL GAME SCENE) ---
 		const deltaTime = Math.min( 0.05, frameDelta ) / STEPS_PER_FRAME;
@@ -1915,4 +2623,678 @@ function animate() {
 
 	stats.update();
 	requestAnimationFrame(animate);
+}
+
+// --- Setup Button Event Listeners (modules are deferred, DOM is ready) ---
+setTimeout(() => {
+	const vrBtn = document.getElementById('masuk-vr-btn-inner');
+	if (vrBtn) {
+		vrBtn.addEventListener('click', () => {
+			if (selectedShapeIndex >= 0) {
+				enterVrShapesScene();
+			}
+		});
+	}
+
+	const backBtn = document.getElementById('shape-back-btn-inner');
+	if (backBtn) {
+		backBtn.addEventListener('click', () => {
+			exitShapeSceneToMaze();
+		});
+	}
+
+	const exitVrBtn = document.getElementById('vr-exit-btn-inner');
+	if (exitVrBtn) {
+		exitVrBtn.addEventListener('click', () => {
+			exitVrToShapeScene();
+		});
+	}
+}, 0);
+
+// --- Hover cursor style for interactive shape scenes ---
+window.addEventListener('mousemove', () => {
+	if (isShapeScene && sceneShapes) {
+		raycaster.setFromCamera(mousePos, camera);
+		const hits = raycaster.intersectObjects(shapeObjects, false);
+		document.body.style.cursor = (hits.length > 0) ? 'pointer' : 'default';
+	} else if (isVrShapesScene && sceneVrShapes) {
+		raycaster.setFromCamera(mousePos, camera);
+		const hits = raycaster.intersectObjects(vrShapeObjects, false);
+		document.body.style.cursor = (hits.length > 0) ? 'pointer' : 'default';
+	} else if (isTamanAbadi && sceneTamanAbadi && returnButtonSprite) {
+		raycaster.setFromCamera(mousePos, camera);
+		const hits = raycaster.intersectObjects([returnButtonSprite], false);
+		document.body.style.cursor = (hits.length > 0) ? 'pointer' : 'default';
+	} else if (isTamanModel && sceneTamanModel) {
+		raycaster.setFromCamera(mousePos, camera);
+		const targets = [tamanModelBackToMazeSprite, ...tamanModelButtons].filter(Boolean);
+		const hits = raycaster.intersectObjects(targets, false);
+		document.body.style.cursor = (hits.length > 0) ? 'pointer' : 'default';
+	} else {
+		if (document.body.style.cursor === 'pointer') {
+			document.body.style.cursor = 'default';
+		}
+	}
+});
+
+// ==========================================
+// SCENE 3: TAMAN MODEL & PANORAMA FUNCTIONS
+// ==========================================
+
+function createTamanModelScene() {
+	sceneTamanModel = new THREE.Scene();
+	sceneTamanModel.background = new THREE.Color(0x0c0a16); // default deep sky night color
+
+	// Add basic lighting
+	const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+	sceneTamanModel.add(ambientLight);
+
+	const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+	dirLight.position.set(5, 10, 7);
+	sceneTamanModel.add(dirLight);
+
+	const warmLight = new THREE.PointLight(0xfef08a, 2.5, 15); // soft warm light
+	warmLight.position.set(0, 0.5, -6);
+	sceneTamanModel.add(warmLight);
+
+	// Group for model mode elements (room, stairs, screen, floating shapes)
+	tamanModelGroup = new THREE.Group();
+	sceneTamanModel.add(tamanModelGroup);
+
+	// 1. Build Checkered Floor
+	const floorCanvas = document.createElement('canvas');
+	floorCanvas.width = 256;
+	floorCanvas.height = 256;
+	const floorCtx = floorCanvas.getContext('2d');
+	
+	// Draw tile pattern
+	floorCtx.fillStyle = '#efeff3'; // very light grey/white tile base
+	floorCtx.fillRect(0, 0, 256, 256);
+	floorCtx.strokeStyle = '#d2d2d8';
+	floorCtx.lineWidth = 4;
+	floorCtx.strokeRect(0, 0, 256, 256);
+	
+	// Draw corners diamonds (intersections)
+	floorCtx.fillStyle = '#1e293b'; // slate dark diamond
+	const sz = 16;
+	const corners = [[0, 0], [256, 0], [0, 256], [256, 256]];
+	corners.forEach(([cx, cy]) => {
+		floorCtx.beginPath();
+		floorCtx.moveTo(cx, cy - sz);
+		floorCtx.lineTo(cx + sz, cy);
+		floorCtx.lineTo(cx, cy + sz);
+		floorCtx.lineTo(cx - sz, cy);
+		floorCtx.closePath();
+		floorCtx.fill();
+	});
+
+	const floorTexture = new THREE.CanvasTexture(floorCanvas);
+	floorTexture.wrapS = THREE.RepeatWrapping;
+	floorTexture.wrapT = THREE.RepeatWrapping;
+	floorTexture.repeat.set(16, 16);
+
+	const floorGeo = new THREE.PlaneGeometry(32, 32);
+	const floorMat = new THREE.MeshStandardMaterial({
+		map: floorTexture,
+		roughness: 0.75,
+		metalness: 0.1
+	});
+	const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+	floorMesh.rotation.x = -Math.PI / 2;
+	floorMesh.position.y = -1.8; // match starting maze floor height
+	floorMesh.receiveShadow = true;
+	tamanModelGroup.add(floorMesh);
+
+	// 2. Build Green Walls
+	const wallMat = new THREE.MeshStandardMaterial({
+		color: 0x6ca373, // beautiful pastel green room wall color
+		roughness: 0.85
+	});
+	
+	// Back wall (behind stairs & TV screen)
+	const backWallGeo = new THREE.PlaneGeometry(24, 12);
+	const backWall = new THREE.Mesh(backWallGeo, wallMat);
+	backWall.position.set(0, 4.2, -14);
+	tamanModelGroup.add(backWall);
+
+	// Left wall
+	const sideWallGeo = new THREE.PlaneGeometry(28, 12);
+	const leftWall = new THREE.Mesh(sideWallGeo, wallMat);
+	leftWall.position.set(-12, 4.2, 0);
+	leftWall.rotation.y = Math.PI / 2;
+	tamanModelGroup.add(leftWall);
+
+	// Right wall
+	const rightWall = new THREE.Mesh(sideWallGeo, wallMat);
+	rightWall.position.set(12, 4.2, 0);
+	rightWall.rotation.y = -Math.PI / 2;
+	tamanModelGroup.add(rightWall);
+
+	// 3. Build Staircases (Left and Right)
+	const stepMat = new THREE.MeshStandardMaterial({
+		color: 0x54875a, // slightly darker green for steps
+		roughness: 0.9
+	});
+	
+	const numSteps = 15;
+	const stepW = 0.65;  // width of each step
+	const stepH = 0.25;  // height of each step
+	const stepD = 2.0;   // depth of steps
+	
+	const stepGeo = new THREE.BoxGeometry(stepW, stepH, stepD);
+
+	for (let i = 0; i < numSteps; i++) {
+		// Left staircase (rising from far-left at x=-11 to center x=-1.25)
+		const leftStep = new THREE.Mesh(stepGeo, stepMat);
+		const lx = -11.0 + i * stepW;
+		const ly = -1.8 + i * stepH + stepH/2;
+		const lz = -12.5; // in front of back wall
+		leftStep.position.set(lx, ly, lz);
+		tamanModelGroup.add(leftStep);
+
+		// Right staircase (rising from far-right at x=11 to center x=1.25)
+		const rightStep = new THREE.Mesh(stepGeo, stepMat);
+		const rx = 11.0 - i * stepW;
+		const ry = -1.8 + i * stepH + stepH/2;
+		const rz = -12.5;
+		rightStep.position.set(rx, ry, rz);
+		tamanModelGroup.add(rightStep);
+	}
+
+	// 4. Build TV/Picture Frame Screen on the Back Wall
+	// TV Frame (Black outer box)
+	const frameGeo = new THREE.BoxGeometry(7.2, 4.2, 0.15);
+	const frameMat = new THREE.MeshStandardMaterial({
+		color: 0x111827, // dark charcoal/black
+		roughness: 0.5
+	});
+	const tvFrame = new THREE.Mesh(frameGeo, frameMat);
+	tvFrame.position.set(0, 3.8, -13.9);
+	tamanModelGroup.add(tvFrame);
+
+	// TV Screen Content (CanvasTexture)
+	const tvCanvas = document.createElement('canvas');
+	tvCanvas.width = 512;
+	tvCanvas.height = 512;
+	tamanModelTvTexture = new THREE.CanvasTexture(tvCanvas);
+	
+	// Draw the TV Screen content
+	drawTvScreen(tvCanvas);
+
+	const screenGeo = new THREE.PlaneGeometry(6.8, 3.8);
+	const screenMat = new THREE.MeshBasicMaterial({
+		map: tamanModelTvTexture,
+		side: THREE.DoubleSide
+	});
+	const tvScreen = new THREE.Mesh(screenGeo, screenMat);
+	tvScreen.position.set(0, 3.8, -13.8);
+	tamanModelGroup.add(tvScreen);
+
+	// 5. Build Floating Shapes (Sphere, Cylinder, Cone)
+	const shapesGroup = new THREE.Group();
+	tamanModelGroup.add(shapesGroup);
+
+	// Sphere (Turquoise/Cyan)
+	const sphereGeo = new THREE.SphereGeometry(0.75, 32, 32);
+	const sphereMat = new THREE.MeshStandardMaterial({
+		color: 0x22d3ee, // turquoise cyan
+		roughness: 0.15,
+		metalness: 0.05
+	});
+	const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
+	sphereMesh.position.set(-2.5, 0.6, -6);
+	shapesGroup.add(sphereMesh);
+	tamanModelShapes.push(sphereMesh);
+	tamanModelShapeOriginalScales.push(sphereMesh.scale.clone());
+
+	// Cylinder (Teal)
+	const cylGeo = new THREE.CylinderGeometry(0.45, 0.45, 1.4, 32);
+	const cylMat = new THREE.MeshStandardMaterial({
+		color: 0x0f766e, // deep teal/green
+		roughness: 0.3
+	});
+	const cylMesh = new THREE.Mesh(cylGeo, cylMat);
+	cylMesh.position.set(0, 0.6, -6);
+	shapesGroup.add(cylMesh);
+	tamanModelShapes.push(cylMesh);
+	tamanModelShapeOriginalScales.push(cylMesh.scale.clone());
+
+	// Cone (Light Turquoise/Green)
+	const coneGeo = new THREE.ConeGeometry(0.65, 1.4, 32);
+	const coneMat = new THREE.MeshStandardMaterial({
+		color: 0x4ade80, // bright light green/turquoise
+		roughness: 0.3
+	});
+	const coneMesh = new THREE.Mesh(coneGeo, coneMat);
+	coneMesh.position.set(2.5, 0.6, -6);
+	shapesGroup.add(coneMesh);
+	tamanModelShapes.push(coneMesh);
+	tamanModelShapeOriginalScales.push(coneMesh.scale.clone());
+
+	// 6. Build Interactive Sprite/Plane Buttons (Added directly to sceneTamanModel to persist in both modes)
+	// Left button: Panorama Taman
+	const panoBtn = createTamanModelButtonMesh("Panorama Taman", -5.5, 0.8, -6, "panorama");
+	sceneTamanModel.add(panoBtn);
+	tamanModelButtons.push(panoBtn);
+
+	// Right button: Model Taman
+	const modelBtn = createTamanModelButtonMesh("Model Taman", 5.5, 0.8, -6, "model");
+	sceneTamanModel.add(modelBtn);
+	tamanModelButtons.push(modelBtn);
+
+	// Exit Button: Kembali ke Labirin (Added directly to sceneTamanModel)
+	const exitBtnCanvas = document.createElement('canvas');
+	exitBtnCanvas.width = 512;
+	exitBtnCanvas.height = 128;
+	const exitBtnTexture = new THREE.CanvasTexture(exitBtnCanvas);
+	
+	drawTamanModelExitButton(exitBtnCanvas, false);
+
+	const exitBtnGeo = new THREE.PlaneGeometry(3.0, 0.75);
+	const exitBtnMat = new THREE.MeshBasicMaterial({
+		map: exitBtnTexture,
+		transparent: true,
+		side: THREE.DoubleSide
+	});
+	tamanModelBackToMazeSprite = new THREE.Mesh(exitBtnGeo, exitBtnMat);
+	tamanModelBackToMazeSprite.position.set(0, 3.2, -6);
+	tamanModelBackToMazeSprite.userData = { isExitButton: true, canvas: exitBtnCanvas, texture: exitBtnTexture };
+	sceneTamanModel.add(tamanModelBackToMazeSprite);
+
+	// 7. Load and create 360 Panorama Sphere
+	const panoTextureLoader = new THREE.TextureLoader();
+	panoTextureLoader.load('assets/panorama_taman.jpg', (texture) => {
+		const panoGeo = new THREE.SphereGeometry(80, 60, 40);
+		panoGeo.scale(-1, 1, 1); // invert scale to map interior
+		const panoMat = new THREE.MeshBasicMaterial({
+			map: texture
+		});
+		panoramaSphere = new THREE.Mesh(panoGeo, panoMat);
+		panoramaSphere.position.set(0, 0, 0);
+		panoramaSphere.visible = false; // Hidden by default (Model mode active)
+		sceneTamanModel.add(panoramaSphere);
+		console.log("panorama_taman.jpg loaded successfully!");
+	}, undefined, (err) => {
+		console.error("Failed to load panorama_taman.jpg:", err);
+	});
+
+	// 8. OrbitControls setup
+	controlsTamanModel = new OrbitControls(camera, renderer.domElement);
+	controlsTamanModel.enabled = false;
+	controlsTamanModel.enableDamping = true;
+	controlsTamanModel.dampingFactor = 0.05;
+	controlsTamanModel.maxPolarAngle = Math.PI / 2.05; // Prevent camera from going underground
+	controlsTamanModel.minDistance = 2;
+	controlsTamanModel.maxDistance = 18;
+}
+
+function drawTvScreen(canvas) {
+	const ctx = canvas.getContext('2d');
+	
+	// Night sky gradient
+	let grad = ctx.createLinearGradient(0, 0, 0, 512);
+	grad.addColorStop(0, '#0c0e1a');
+	grad.addColorStop(0.5, '#1e1b4b');
+	grad.addColorStop(1, '#311042');
+	ctx.fillStyle = grad;
+	ctx.fillRect(0, 0, 512, 512);
+
+	// Stars
+	ctx.fillStyle = '#ffffff';
+	for (let i = 0; i < 40; i++) {
+		let sx = Math.abs(Math.sin(i * 123.45)) * 512;
+		let sy = Math.abs(Math.cos(i * 987.65)) * 320; // keep in top portion
+		let size = 1.0 + Math.abs(Math.sin(i)) * 2;
+		ctx.beginPath();
+		ctx.arc(sx, sy, size, 0, Math.PI * 2);
+		ctx.fill();
+	}
+
+	// Moon (Crescent)
+	ctx.fillStyle = '#fef08a';
+	ctx.beginPath();
+	ctx.arc(420, 100, 35, 0, Math.PI * 2);
+	ctx.fill();
+	
+	ctx.fillStyle = '#0c0e1a'; // cut out crescent shape
+	ctx.beginPath();
+	ctx.arc(402, 90, 35, 0, Math.PI * 2);
+	ctx.fill();
+
+	// Speaker Box
+	ctx.fillStyle = '#1e293b';
+	ctx.strokeStyle = '#475569';
+	ctx.lineWidth = 8;
+	ctx.fillRect(216, 200, 80, 170);
+	ctx.strokeRect(216, 200, 80, 170);
+
+	// Top Speaker circle
+	ctx.fillStyle = '#0f172a';
+	ctx.strokeStyle = '#334155';
+	ctx.lineWidth = 4;
+	ctx.beginPath();
+	ctx.arc(256, 245, 24, 0, Math.PI * 2);
+	ctx.fill();
+	ctx.stroke();
+	
+	ctx.fillStyle = '#ef4444'; // red center dome
+	ctx.beginPath();
+	ctx.arc(256, 245, 8, 0, Math.PI * 2);
+	ctx.fill();
+
+	// Bottom Speaker circle
+	ctx.fillStyle = '#0f172a';
+	ctx.beginPath();
+	ctx.arc(256, 315, 28, 0, Math.PI * 2);
+	ctx.fill();
+	ctx.stroke();
+
+	ctx.fillStyle = '#38bdf8'; // blue center dome
+	ctx.beginPath();
+	ctx.arc(256, 315, 10, 0, Math.PI * 2);
+	ctx.fill();
+
+	// Zzz sleeping letters
+	ctx.fillStyle = '#f472b6'; // pink letters
+	ctx.font = 'bold 44px "Outfit", sans-serif';
+	ctx.fillText('Z', 242, 105);
+	ctx.font = 'bold 30px "Outfit", sans-serif';
+	ctx.fillText('z', 268, 125);
+	ctx.font = 'bold 22px "Outfit", sans-serif';
+	ctx.fillText('z', 285, 140);
+}
+
+function drawTamanModelCircleButton(canvas, text, hovered) {
+	const ctx = canvas.getContext('2d');
+	ctx.clearRect(0, 0, 256, 256);
+
+	// Inner circle fill
+	ctx.fillStyle = '#fda4af'; // soft rose pink
+	ctx.strokeStyle = '#ffffff';
+	ctx.lineWidth = 12;
+
+	ctx.beginPath();
+	ctx.arc(128, 140, 75, 0, Math.PI * 2); // shifted down slightly to make space for text
+	ctx.fill();
+	ctx.stroke();
+
+	// Glow if hovered
+	if (hovered) {
+		ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+		ctx.beginPath();
+		ctx.arc(128, 140, 69, 0, Math.PI * 2);
+		ctx.fill();
+	}
+
+	// Text above the circle
+	ctx.fillStyle = '#ffffff';
+	ctx.textAlign = 'center';
+	ctx.textBaseline = 'middle';
+	ctx.font = '800 24px "Outfit", sans-serif';
+	ctx.fillText(text, 128, 35);
+}
+
+function drawTamanModelExitButton(canvas, hovered) {
+	const ctx = canvas.getContext('2d');
+	ctx.clearRect(0, 0, 512, 128);
+
+	// Capsule border & fill
+	ctx.fillStyle = hovered ? 'rgba(244, 63, 94, 0.85)' : 'rgba(15, 23, 42, 0.8)';
+	ctx.strokeStyle = '#f43f5e';
+	ctx.lineWidth = 6;
+
+	const x = 6, y = 6, w = 500, h = 116, r = 58;
+	ctx.beginPath();
+	ctx.moveTo(x+r, y);
+	ctx.arcTo(x+w, y, x+w, y+h, r);
+	ctx.arcTo(x+w, y+h, x, y+h, r);
+	ctx.arcTo(x, y+h, x, y, r);
+	ctx.arcTo(x, y, x+w, y, r);
+	ctx.closePath();
+	
+	ctx.shadowColor = '#f43f5e';
+	ctx.shadowBlur = hovered ? 15 : 6;
+	ctx.fill();
+	ctx.stroke();
+	
+	ctx.shadowBlur = 0;
+	ctx.fillStyle = '#ffffff';
+	ctx.textAlign = 'center';
+	ctx.textBaseline = 'middle';
+	ctx.font = 'bold 36px "Outfit", sans-serif';
+	ctx.fillText('⬅ KEMBALI KE LABIRIN', 256, 64);
+}
+
+function createTamanModelButtonMesh(text, x, y, z, btnId) {
+	const canvas = document.createElement('canvas');
+	canvas.width = 256;
+	canvas.height = 256;
+	const texture = new THREE.CanvasTexture(canvas);
+	
+	drawTamanModelCircleButton(canvas, text, false);
+
+	const geo = new THREE.PlaneGeometry(1.6, 1.6);
+	const mat = new THREE.MeshBasicMaterial({
+		map: texture,
+		transparent: true,
+		side: THREE.DoubleSide
+	});
+	
+	const mesh = new THREE.Mesh(geo, mat);
+	mesh.position.set(x, y, z);
+	mesh.userData = { isButton: true, btnId: btnId, canvas: canvas, texture: texture, text: text };
+	
+	return mesh;
+}
+
+function enterTamanModel() {
+	if (isTamanModel) return;
+
+	// Save original state
+	savedPlayerStart.copy(playerCollider.start);
+	savedPlayerEnd.copy(playerCollider.end);
+	savedPlayerVelocity.copy(playerVelocity);
+	savedCameraRotation.copy(camera.rotation);
+
+	// Trigger black transition
+	const transition = document.getElementById('transition-overlay');
+	if (transition) transition.classList.add('active');
+
+	setTimeout(() => {
+		isTamanModel = true;
+		isTamanModelPanorama = false; // Start in Model mode
+
+		// Update HUD Badge
+		const sceneBadge = document.getElementById('scene-badge');
+		if (sceneBadge) {
+			sceneBadge.textContent = "Dimensi Taman Model";
+			sceneBadge.style.color = "#fda4af";
+			sceneBadge.style.borderColor = "rgba(253, 164, 175, 0.4)";
+		}
+
+		// Reset model scene visibility states
+		tamanModelGroup.visible = true;
+		if (panoramaSphere) panoramaSphere.visible = false;
+
+		// Position camera and target inside green room
+		camera.position.set(0, 1.2, 5); // view from front looking towards Z=-6
+		camera.rotation.set(0, 0, 0);
+
+		if (controlsTamanModel) {
+			controlsTamanModel.target.set(0, 1.0, -6);
+			controlsTamanModel.update();
+			controlsTamanModel.enabled = true;
+		}
+
+		document.exitPointerLock();
+
+		// Show/adjust description card or scene instructions
+		const descCard = document.getElementById('shape-desc-card');
+		if (descCard) {
+			descCard.querySelector('.shape-desc-title').textContent = "Model & Panorama";
+			descCard.querySelector('.shape-desc-body').textContent = "Pilih tombol pink sebelah kiri untuk berpindah ke mode Panorama 360°, atau tombol sebelah kanan untuk kembali melihat susunan Bentuk 3D.";
+			descCard.querySelector('.shape-desc-name').textContent = "Panduan Scene 3";
+			descCard.style.display = 'block';
+			setTimeout(() => descCard.style.opacity = '1', 50);
+		}
+
+		setTimeout(() => {
+			if (transition) transition.classList.remove('active');
+		}, 300);
+	}, 800);
+}
+
+function exitTamanModel() {
+	if (!isTamanModel) return;
+
+	const transition = document.getElementById('transition-overlay');
+	if (transition) transition.classList.add('active');
+
+	if (controlsTamanModel) {
+		controlsTamanModel.enabled = false;
+	}
+
+	// Hide description card
+	const descCard = document.getElementById('shape-desc-card');
+	if (descCard) {
+		descCard.style.opacity = '0';
+		setTimeout(() => descCard.style.display = 'none', 300);
+	}
+
+	setTimeout(() => {
+		isTamanModel = false;
+
+		// Restore badge
+		const sceneBadge = document.getElementById('scene-badge');
+		if (sceneBadge) {
+			sceneBadge.textContent = "Taman Labirin Awal";
+			sceneBadge.style.color = "#d8f53c";
+			sceneBadge.style.borderColor = "rgba(216, 245, 60, 0.4)";
+		}
+
+		// Restore player position
+		playerCollider.start.copy(savedPlayerStart);
+		playerCollider.end.copy(savedPlayerEnd);
+		playerVelocity.copy(savedPlayerVelocity);
+		camera.position.copy(playerCollider.end);
+		camera.rotation.copy(savedCameraRotation);
+
+		// Request pointer lock back
+		document.body.requestPointerLock();
+
+		setTimeout(() => {
+			if (transition) transition.classList.remove('active');
+		}, 300);
+	}, 800);
+}
+
+function setTamanModelPanorama(active) {
+	if (!isTamanModel) return;
+	
+	isTamanModelPanorama = active;
+	
+	const transition = document.getElementById('transition-overlay');
+	if (transition) {
+		transition.classList.add('active');
+		
+		setTimeout(() => {
+			if (active) {
+				// Panorama mode: hide the room/stairs/shapes group
+				tamanModelGroup.visible = false;
+				if (panoramaSphere) panoramaSphere.visible = true;
+				
+				// Keep the back button visible so they can return
+				tamanModelBackToMazeSprite.position.set(0, 2.5, -4); // place closer to look around
+				
+				// Update instructions
+				const descCard = document.getElementById('shape-desc-card');
+				if (descCard) {
+					descCard.querySelector('.shape-desc-title').textContent = "Panorama Taman 360°";
+					descCard.querySelector('.shape-desc-body').textContent = "Geser mouse/layar untuk berputar dan melihat keindahan pemandangan taman malam 360 derajat. Klik tombol di depan untuk kembali.";
+					descCard.querySelector('.shape-desc-name').textContent = "Mode Panorama";
+				}
+			} else {
+				// Model mode: show the room/stairs/shapes group
+				tamanModelGroup.visible = true;
+				if (panoramaSphere) panoramaSphere.visible = false;
+				
+				tamanModelBackToMazeSprite.position.set(0, 3.2, -6);
+				
+				// Update instructions
+				const descCard = document.getElementById('shape-desc-card');
+				if (descCard) {
+					descCard.querySelector('.shape-desc-title').textContent = "Model & Panorama";
+					descCard.querySelector('.shape-desc-body').textContent = "Pilih tombol pink sebelah kiri untuk berpindah ke mode Panorama 360°, atau tombol sebelah kanan untuk kembali melihat susunan Bentuk 3D.";
+					descCard.querySelector('.shape-desc-name').textContent = "Panduan Scene 3";
+				}
+			}
+			
+			setTimeout(() => {
+				if (transition) transition.classList.remove('active');
+			}, 300);
+		}, 500);
+	}
+}
+
+function checkTamanModelClick() {
+	if (!isTamanModel) return;
+	raycaster.setFromCamera(mousePos, camera);
+	
+	// First check back to maze button
+	const intersectsExit = raycaster.intersectObject(tamanModelBackToMazeSprite);
+	if (intersectsExit.length > 0) {
+		exitTamanModel();
+		return;
+	}
+	
+	// Check circular buttons (visible in both panorama and model mode)
+	const intersectsButtons = raycaster.intersectObjects(tamanModelButtons);
+	if (intersectsButtons.length > 0) {
+		const hitBtn = intersectsButtons[0].object;
+		const btnId = hitBtn.userData.btnId;
+		if (btnId === 'panorama') {
+			setTamanModelPanorama(true);
+		} else if (btnId === 'model') {
+			setTamanModelPanorama(false);
+		}
+	}
+}
+
+function updateTamanModelHover() {
+	if (!isTamanModel) return;
+	raycaster.setFromCamera(mousePos, camera);
+	
+	// Check exit button hover
+	let intersectsExit = raycaster.intersectObject(tamanModelBackToMazeSprite);
+	if (intersectsExit.length > 0) {
+		if (!tamanModelBackToMazeSprite.userData.hovered) {
+			tamanModelBackToMazeSprite.userData.hovered = true;
+			drawTamanModelExitButton(tamanModelBackToMazeSprite.userData.canvas, true);
+			tamanModelBackToMazeSprite.userData.texture.needsUpdate = true;
+		}
+	} else {
+		if (tamanModelBackToMazeSprite.userData.hovered) {
+			tamanModelBackToMazeSprite.userData.hovered = false;
+			drawTamanModelExitButton(tamanModelBackToMazeSprite.userData.canvas, false);
+			tamanModelBackToMazeSprite.userData.texture.needsUpdate = true;
+		}
+	}
+	
+	// Check circular buttons hover
+	tamanModelButtons.forEach(btn => {
+		let intersects = raycaster.intersectObject(btn);
+		if (intersects.length > 0) {
+			if (!btn.userData.hovered) {
+				btn.userData.hovered = true;
+				drawTamanModelCircleButton(btn.userData.canvas, btn.userData.text, true);
+				btn.userData.texture.needsUpdate = true;
+			}
+		} else {
+			if (btn.userData.hovered) {
+				btn.userData.hovered = false;
+				drawTamanModelCircleButton(btn.userData.canvas, btn.userData.text, false);
+				btn.userData.texture.needsUpdate = true;
+			}
+		}
+	});
 }
