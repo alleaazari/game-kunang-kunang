@@ -2667,9 +2667,10 @@ window.addEventListener('mousemove', () => {
 		document.body.style.cursor = (hits.length > 0) ? 'pointer' : 'default';
 	} else if (isTamanModel && sceneTamanModel) {
 		raycaster.setFromCamera(mousePos, camera);
-		const targets = [tamanModelBackToMazeSprite, ...tamanModelButtons].filter(Boolean);
-		const hits = raycaster.intersectObjects(targets, false);
-		document.body.style.cursor = (hits.length > 0) ? 'pointer' : 'default';
+		const btnTargets = [tamanModelBackToMazeSprite, ...tamanModelButtons].filter(Boolean);
+		const btnHits = raycaster.intersectObjects(btnTargets, false);
+		const shapeHits = raycaster.intersectObjects(tamanModelShapes, false);
+		document.body.style.cursor = (btnHits.length > 0 || shapeHits.length > 0) ? 'pointer' : 'default';
 	} else {
 		if (document.body.style.cursor === 'pointer') {
 			document.body.style.cursor = 'default';
@@ -2843,6 +2844,9 @@ function createTamanModelScene() {
 	});
 	const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
 	sphereMesh.position.set(-2.5, 0.6, -6);
+	sphereMesh.userData.shapeName = "Bola (Sphere)";
+	sphereMesh.userData.shapeIcon = "🔵";
+	sphereMesh.userData.shapeDesc = "Bola adalah bangun ruang tiga dimensi yang sempurna. Setiap titik pada permukaannya berjarak sama dari titik pusatnya — disebut jari-jari. Bola tidak memiliki sudut, rusuk, maupun sisi datar. Contoh di alam: buah jeruk, gelembung sabun, planet, dan bintang.";
 	shapesGroup.add(sphereMesh);
 	tamanModelShapes.push(sphereMesh);
 	tamanModelShapeOriginalScales.push(sphereMesh.scale.clone());
@@ -2855,6 +2859,9 @@ function createTamanModelScene() {
 	});
 	const cylMesh = new THREE.Mesh(cylGeo, cylMat);
 	cylMesh.position.set(0, 0.6, -6);
+	cylMesh.userData.shapeName = "Tabung (Cylinder)";
+	cylMesh.userData.shapeIcon = "🟢";
+	cylMesh.userData.shapeDesc = "Tabung adalah bangun ruang yang memiliki dua sisi lingkaran sejajar (atas dan bawah) yang dihubungkan oleh permukaan melengkung. Tabung memiliki 2 rusuk berbentuk lingkaran dan tidak memiliki sudut. Contoh di kehidupan: kaleng minuman, pipa air, batang pohon, dan drum.";
 	shapesGroup.add(cylMesh);
 	tamanModelShapes.push(cylMesh);
 	tamanModelShapeOriginalScales.push(cylMesh.scale.clone());
@@ -2867,6 +2874,9 @@ function createTamanModelScene() {
 	});
 	const coneMesh = new THREE.Mesh(coneGeo, coneMat);
 	coneMesh.position.set(2.5, 0.6, -6);
+	coneMesh.userData.shapeName = "Kerucut (Cone)";
+	coneMesh.userData.shapeIcon = "🟩";
+	coneMesh.userData.shapeDesc = "Kerucut adalah bangun ruang yang memiliki satu alas lingkaran dan satu titik puncak di atasnya. Seluruh garis dari puncak ke lingkaran alas membentuk permukaan miring yang disebut selimut kerucut. Contoh di kehidupan: topi ulang tahun, traffic cone, es krim cone, dan menara kastil.";
 	shapesGroup.add(coneMesh);
 	tamanModelShapes.push(coneMesh);
 	tamanModelShapeOriginalScales.push(coneMesh.scale.clone());
@@ -2918,14 +2928,16 @@ function createTamanModelScene() {
 		console.error("Failed to load panorama_taman.jpg:", err);
 	});
 
-	// 8. OrbitControls setup
+	// 8. OrbitControls setup (with scroll-wheel zoom enabled)
 	controlsTamanModel = new OrbitControls(camera, renderer.domElement);
 	controlsTamanModel.enabled = false;
 	controlsTamanModel.enableDamping = true;
 	controlsTamanModel.dampingFactor = 0.05;
-	controlsTamanModel.maxPolarAngle = Math.PI / 2.05; // Prevent camera from going underground
-	controlsTamanModel.minDistance = 2;
-	controlsTamanModel.maxDistance = 18;
+	controlsTamanModel.enableZoom = true;       // scroll-wheel zoom
+	controlsTamanModel.zoomSpeed = 1.2;
+	controlsTamanModel.maxPolarAngle = Math.PI / 1.95; // allow looking slightly below shapes
+	controlsTamanModel.minDistance = 1.0;       // zoom in close to shapes
+	controlsTamanModel.maxDistance = 14;        // don't go too far back
 }
 
 function drawTvScreen(canvas) {
@@ -3132,10 +3144,17 @@ function enterTamanModel() {
 		const descCard = document.getElementById('shape-desc-card');
 		if (descCard) {
 			descCard.querySelector('.shape-desc-title').textContent = "Model & Panorama";
-			descCard.querySelector('.shape-desc-body').textContent = "Pilih tombol pink sebelah kiri untuk berpindah ke mode Panorama 360°, atau tombol sebelah kanan untuk kembali melihat susunan Bentuk 3D.";
+			descCard.querySelector('.shape-desc-body').textContent = "Klik bentuk 3D untuk melihat deskripsinya. Pilih tombol pink kiri untuk Panorama 360°, kanan untuk kembali ke Model. Scroll mouse untuk zoom.";
 			descCard.querySelector('.shape-desc-name').textContent = "Panduan Scene 3";
 			descCard.style.display = 'block';
 			setTimeout(() => descCard.style.opacity = '1', 50);
+		}
+
+		// Reset and hide the shape description card (top-right)
+		const shapeCard = document.getElementById('taman-model-shape-card');
+		if (shapeCard) {
+			shapeCard.style.opacity = '0';
+			shapeCard.style.display = 'none';
 		}
 
 		setTimeout(() => {
@@ -3154,11 +3173,18 @@ function exitTamanModel() {
 		controlsTamanModel.enabled = false;
 	}
 
-	// Hide description card
+	// Hide both description cards
 	const descCard = document.getElementById('shape-desc-card');
 	if (descCard) {
 		descCard.style.opacity = '0';
 		setTimeout(() => descCard.style.display = 'none', 300);
+	}
+	const shapeCard = document.getElementById('taman-model-shape-card');
+	if (shapeCard) {
+		shapeCard.style.opacity = '0';
+		shapeCard.style.display = 'none';
+		// Reset all shape scales
+		tamanModelShapes.forEach((s, i) => s.scale.copy(tamanModelShapeOriginalScales[i]));
 	}
 
 	setTimeout(() => {
@@ -3256,6 +3282,42 @@ function checkTamanModelClick() {
 			setTamanModelPanorama(true);
 		} else if (btnId === 'model') {
 			setTamanModelPanorama(false);
+		}
+		return;
+	}
+
+	// Check floating shapes — show description card top-right
+	if (!isTamanModelPanorama && tamanModelShapes.length > 0) {
+		const intersectsShapes = raycaster.intersectObjects(tamanModelShapes, false);
+		if (intersectsShapes.length > 0) {
+			const hitShape = intersectsShapes[0].object;
+			const shapeCard = document.getElementById('taman-model-shape-card');
+			if (shapeCard && hitShape.userData.shapeName) {
+				shapeCard.querySelector('.taman-model-shape-tag').textContent = hitShape.userData.shapeIcon + ' Bentuk Terpilih';
+				shapeCard.querySelector('.taman-model-shape-title').textContent = hitShape.userData.shapeName;
+				shapeCard.querySelector('.taman-model-shape-body').textContent = hitShape.userData.shapeDesc;
+				shapeCard.style.display = 'block';
+				setTimeout(() => shapeCard.style.opacity = '1', 20);
+
+				// Highlight selected shape (scale up slightly)
+				tamanModelShapes.forEach(s => {
+					const idx = tamanModelShapes.indexOf(s);
+					const orig = tamanModelShapeOriginalScales[idx];
+					if (s === hitShape) {
+						s.scale.set(orig.x * 1.25, orig.y * 1.25, orig.z * 1.25);
+					} else {
+						s.scale.copy(orig);
+					}
+				});
+			}
+		} else {
+			// Clicked empty space — hide shape card and reset scales
+			const shapeCard = document.getElementById('taman-model-shape-card');
+			if (shapeCard && shapeCard.style.opacity !== '0') {
+				shapeCard.style.opacity = '0';
+				setTimeout(() => shapeCard.style.display = 'none', 400);
+				tamanModelShapes.forEach((s, i) => s.scale.copy(tamanModelShapeOriginalScales[i]));
+			}
 		}
 	}
 }
