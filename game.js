@@ -668,7 +668,7 @@ const vector2 = new THREE.Vector3();
 const vector3 = new THREE.Vector3();
 
 document.addEventListener( 'keydown', ( event ) => {
-	if (isTamanAbadi || isVrShapesScene || isTamanModel) return; // Ignore controls in Scene 2/2.5/3
+	if (isTamanAbadi || isVrShapesScene || isTamanModel || isShapeScene) return; // Ignore controls in Scene 2/2.5/3/1.5
 	keyStates[ event.code ] = true;
 } );
 
@@ -698,7 +698,7 @@ startButton.addEventListener('click', () => {
 });
 
 container.addEventListener( 'mousedown', () => {
-	if (isTamanAbadi || isTamanModel) return;
+	if (isTamanAbadi || isTamanModel || isShapeScene || isVrShapesScene) return;
 	if (overlay.style.display === 'none') {
 		document.body.requestPointerLock();
 	}
@@ -760,7 +760,7 @@ document.addEventListener( 'mouseup', (event) => {
 } );
 
 document.body.addEventListener( 'mousemove', ( event ) => {
-	if (isTamanAbadi || isTamanModel) return; // Ignore mouse rotation when OrbitControls are active
+	if (isTamanAbadi || isTamanModel || isShapeScene || isVrShapesScene) return; // Ignore mouse rotation when OrbitControls are active
 	if ( document.pointerLockElement === document.body ) {
 		camera.rotation.y -= event.movementX / 500;
 		camera.rotation.x -= event.movementY / 500;
@@ -2082,7 +2082,8 @@ function createShapeSelectionScene() {
 	controlsShapes = new OrbitControls(camera, renderer.domElement);
 	controlsShapes.enabled = false;
 	controlsShapes.enableDamping = true;
-	controlsShapes.dampingFactor = 0.06;
+	controlsShapes.dampingFactor = 0.05;
+	controlsShapes.rotateSpeed = 0.35;
 	controlsShapes.enablePan = false;
 	controlsShapes.maxPolarAngle = Math.PI / 2.2;
 	controlsShapes.minDistance = 3;
@@ -2328,6 +2329,8 @@ function createVrShapesScene() {
 	controlsVrShapes.enabled = false;
 	controlsVrShapes.enableDamping = true;
 	controlsVrShapes.dampingFactor = 0.05;
+	controlsVrShapes.rotateSpeed = 0.35;
+	controlsVrShapes.enablePan = false;
 	controlsVrShapes.maxPolarAngle = Math.PI / 2.1;
 	controlsVrShapes.minDistance = 2;
 	controlsVrShapes.maxDistance = 10;
@@ -3194,7 +3197,11 @@ setTimeout(() => {
 }, 0);
 
 // --- Hover cursor style for interactive shape scenes ---
-window.addEventListener('mousemove', () => {
+window.addEventListener('mousemove', (event) => {
+	if (event && event.clientX !== undefined) {
+		mousePos.x = (event.clientX / window.innerWidth) * 2 - 1;
+		mousePos.y = -(event.clientY / window.innerHeight) * 2 + 1;
+	}
 	if (isShapeScene && sceneShapes) {
 		raycaster.setFromCamera(mousePos, camera);
 		const hits = raycaster.intersectObjects(shapeObjects, false);
@@ -3507,6 +3514,8 @@ function createTamanModelScene() {
 	controlsTamanModel.enabled = false;
 	controlsTamanModel.enableDamping = true;
 	controlsTamanModel.dampingFactor = 0.05;
+	controlsTamanModel.rotateSpeed = 0.35;
+	controlsTamanModel.enablePan = false;
 	controlsTamanModel.enableZoom = true;       // scroll-wheel zoom
 	controlsTamanModel.zoomSpeed = 1.2;
 	controlsTamanModel.maxPolarAngle = Math.PI / 1.95; // allow looking slightly below shapes
